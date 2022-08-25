@@ -1,0 +1,22 @@
+{
+  "version": "pre-alpha",
+  "logger": {
+    "directory": "log",
+    "level": "all"
+  },
+  "home": {
+    "directory": ".cliesh",
+    "setting": {
+      "directory": "setting"
+    },
+    "clash": {
+      "directory": "clash"
+    },
+    "data": {
+      "directory": "data",
+      "profiles": {
+        "directory": "data/profiles"
+      }
+    }
+  }
+}
