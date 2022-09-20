@@ -1,4 +1,5 @@
 import { Component, OnInit } from "@angular/core";
+import { ClashService } from "src/app/core/service/clash.service";
 import { Rule, RuleService } from "src/app/core/service/rule.service";
 
 @Component({
@@ -13,12 +14,16 @@ export class RuleComponent implements OnInit {
   loadding: boolean = true;
   searhText: string = "";
 
-  constructor(private ruleService: RuleService) {
-    this.ruleService.getRules().subscribe((rules) => {
-      this.allRules = rules;
-      this.rules = rules;
+  constructor(private clashService: ClashService, private ruleService: RuleService) {
+    if (this.clashService.isClashConnected) {
+      this.ruleService.getRules().subscribe((rules) => {
+        this.allRules = rules;
+        this.rules = rules;
+        this.loadding = false;
+      });
+    } else {
       this.loadding = false;
-    });
+    }
   }
 
   ngOnInit(): void {}
@@ -30,6 +35,4 @@ export class RuleComponent implements OnInit {
       return fullText.toLowerCase().includes(this.searhText.toLowerCase());
     });
   }
-
-  ngOnDestroy(): void {}
 }

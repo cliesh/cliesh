@@ -84,8 +84,7 @@
         "serve": {
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
-            "browserTarget": "cliesh:build",
-            "proxyConfig": "proxy.conf.js"
+            "browserTarget": "cliesh:build"
           },
           "configurations": {
             "production": {
@@ -118,6 +117,5 @@
         }
       }
     }
-  },
-  "defaultProject": "cliesh"
+  }
 }

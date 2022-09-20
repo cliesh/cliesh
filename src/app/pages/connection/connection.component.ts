@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NzModalService } from "ng-zorro-antd/modal";
 import { Subscription } from "rxjs";
+import { ClashService } from "src/app/core/service/clash.service";
 import { Connection, ConnectionService } from "src/app/core/service/monitor-connection.service";
 
 type SortType = "IP_OR_DOMAIN" | "DATETIME" | "UPLOAD_TRAFFIC" | "DOWNLOAD_TRAFFIC" | "TOTAL_TRAFFIC";
@@ -28,16 +29,20 @@ export class ConnectionComponent implements OnInit {
   sortKey: SortType = "IP_OR_DOMAIN";
   sortOrder: SortOrder = "ASC";
 
-  constructor(private connectionService: ConnectionService, private message: NzMessageService, private modal: NzModalService) {}
+  constructor(private clashService: ClashService, private connectionService: ConnectionService, private message: NzMessageService, private modal: NzModalService) {}
 
   ngOnInit(): void {
-    this.connectionsSubscription = this.connectionService.connectionsObservable.subscribe((connections) => {
-      this.uploadTotal = connections.uploadTotal;
-      this.downloadTotal = connections.downloadTotal;
-      this.allConnections = connections.connections;
-      this.filterAndSortConnections();
+    if (this.clashService.isClashConnected) {
+      this.connectionsSubscription = this.connectionService.connectionsObservable.subscribe((connections) => {
+        this.uploadTotal = connections.uploadTotal;
+        this.downloadTotal = connections.downloadTotal;
+        this.allConnections = connections.connections;
+        this.filterAndSortConnections();
+        this.loadding = false;
+      });
+    }else{
       this.loadding = false;
-    });
+    }
   }
 
   filterAndSortConnections() {

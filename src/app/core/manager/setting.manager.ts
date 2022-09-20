@@ -9,6 +9,17 @@ export class SettingManager {
     });
   }
 
+  /**
+   * clash version in user machine
+   */
+  get clashVersionInstalled(): string | undefined {
+    return this.get<string>("clash-version");
+  }
+
+  setClashVersionInstalled(version: string): void {
+    this.set("clash-version", version);
+  }
+
   get<T>(key: string, defaultValue?: T): T | undefined {
     return this.settings.get(key, defaultValue) as T | undefined;
   }

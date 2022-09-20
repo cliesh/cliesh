@@ -1,7 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { map, Observable } from "rxjs";
-import { ClashApiAuthInfrastructure } from "../infrastructure/clash-api-auth.infrastructure";
+import { ClashManager } from "../manager/clash.manager";
 
 export interface Provider {
   name: string;
@@ -21,10 +21,10 @@ export interface Proxy {
   providedIn: "root"
 })
 export class ProvidersService {
-  constructor(private httpClient: HttpClient, private clashApiAuthInfrastructure: ClashApiAuthInfrastructure) {}
+  constructor(private httpClient: HttpClient, private clashManager: ClashManager) { }
 
   getProviders(): Observable<Provider[]> {
-    return this.httpClient.get("/providers/proxies", this.clashApiAuthInfrastructure.authorizationHeader).pipe(
+    return this.httpClient.get(`${this.clashManager.baseUrl}/providers/proxies`, { headers: this.clashManager.authorizationHeaders }).pipe(
       map((obj) => {
         const object = obj as any;
         const providers = object.providers as any;
@@ -42,15 +42,15 @@ export class ProvidersService {
   }
 
   getProviderInformation(provider: string): Observable<Provider> {
-    return (this.httpClient.get<Provider>(`/providers/proxies/${provider}`, this.clashApiAuthInfrastructure.authorizationHeader) as unknown) as Observable<Provider>;
+    return this.httpClient.get<Provider>(`${this.clashManager.baseUrl}/providers/proxies/${provider}`, { headers: this.clashManager.authorizationHeaders }) as unknown as Observable<Provider>;
   }
 
   selectProvider(provider: string) {
     const body = {};
-    return this.httpClient.put(`/providers/proxies/${provider}`, body);
+    return this.httpClient.put(`${this.clashManager.baseUrl}/providers/proxies/${provider}`, body);
   }
 
   checkProviderHealth(provider: string): Observable<Provider> {
-    return this.httpClient.get<Provider>(`/providers/proxies/${provider}/healthcheck`);
+    return this.httpClient.get<Provider>(`${this.clashManager.baseUrl}/providers/proxies/${provider}/healthcheck`);
   }
 }

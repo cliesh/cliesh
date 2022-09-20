@@ -3,12 +3,14 @@ import { RouterModule, Routes } from "@angular/router";
 import { AboutComponent } from "./pages/about/about.component";
 import { ConnectionComponent } from "./pages/connection/connection.component";
 import { LogsComponent } from "./pages/logs/logs.component";
+import { ProfilesComponent } from "./pages/profiles/profiles.component";
 import { ProxyComponent } from "./pages/proxy/proxy.component";
 import { RuleComponent } from "./pages/rule/rule.component";
 import { SettingComponent } from "./pages/setting/setting.component";
 
 const routes: Routes = [
   { path: "", pathMatch: "full", redirectTo: "/proxy" },
+  { path: "profiles", component: ProfilesComponent },
   { path: "proxy", component: ProxyComponent },
   { path: "rule", component: RuleComponent },
   { path: "connection", component: ConnectionComponent },
