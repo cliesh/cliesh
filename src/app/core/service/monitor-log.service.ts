@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, timer } from "rxjs";
-import { ClashApiAuthInfrastructure } from "../infrastructure/clash-api-auth.infrastructure";
+import { BehaviorSubject, Observable, timer } from "rxjs";
+import { ClashManager } from "../manager/clash.manager";
 
 export interface Log {
   level: LogLevel;
@@ -31,37 +31,47 @@ export type LogLevel = "info" | "warn" | "error" | "debug";
 })
 export class LogMonitorService {
   private logBehaviorSubject = new BehaviorSubject<Log[]>([]);
-  logObservable = this.logBehaviorSubject.asObservable();
+  private logObservable = this.logBehaviorSubject.asObservable();
 
   private logInfoTCPOrUDPContentRegex = /\[(.*)\]\s(\S*)\s\-\-\>\s(\S*)\smatch\s(.*)\susing\s(.*)/;
   private logDebugDNSContentRegex = /\[(.*)\]\s(\S*)\s\-\-\>\s(\S*)/;
   private logDebugTUNContentRegex = /\[(TUN)\]\s(.*)/;
 
-  private logsReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+  requestController?: AbortController;
+  private logsReader: ReadableStreamDefaultReader<Uint8Array> | undefined;
   private logs: Log[] = [];
 
-  constructor(private clashApiAuthoriiizationService: ClashApiAuthInfrastructure) {
-    this.initLogsReader();
+  constructor(private clashManager: ClashManager) {
     this.monitorLogs();
   }
 
-  private initLogsReader() {
-    if (this.logsReader !== null) this.cancelLogsReader();
-    fetch(`/logs?level=debug`, this.clashApiAuthoriiizationService.authorizationHeader).then((response) => {
-      this.logsReader = response.body!.getReader();
-      if (response.status < 200 || response.status >= 300) timer(5000).subscribe(() => this.initLogsReader());
-    });
+  get logsObservable(): Observable<Log[]> {
+    this.logsReader = undefined;
+    this.requestController?.abort();
+    this.initLogsReader();
+    return this.logObservable;
   }
 
-  private cancelLogsReader() {
-    this.logsReader?.cancel();
-    this.logsReader = null;
+  private initLogsReader() {
+    this.requestController = new AbortController();
+    fetch(
+      `${this.clashManager.baseUrl}/logs?level=debug`,
+      {
+        headers: this.clashManager.authorizationHeaders,
+        signal: this.requestController.signal
+      }
+    ).then((response) => {
+      this.logsReader = response.body!.getReader();
+      if (response.status < 200 || response.status >= 300) timer(5000).subscribe(() => this.initLogsReader());
+    }).catch((error) => {
+      // ignore
+    });
   }
 
   private monitorLogs() {
     timer(0, 1000).subscribe(() => {
-      if (this.logsReader === null) return;
-      this.logsReader
+      if (this.logsReader === undefined) return;
+      this.logsReader!
         .read()
         .then((result) => {
           const logsString = new TextDecoder().decode(result.value);
@@ -75,7 +85,7 @@ export class LogMonitorService {
         })
         .catch((error) => {
           const isJsonUnexpected = this.jsonUnexpectedRegex.test(error.message);
-          if (!isJsonUnexpected) console.log(error);
+          if (!isJsonUnexpected) console.log("[ignore]: ", error);
         });
     });
   }

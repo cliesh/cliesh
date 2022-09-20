@@ -1,4 +1,5 @@
 import { Component, OnInit } from "@angular/core";
+import { ClashService } from "src/app/core/service/clash.service";
 import { LogMonitorService } from "src/app/core/service/monitor-log.service";
 
 @Component({
@@ -12,11 +13,13 @@ export class LogsComponent implements OnInit {
   private allLogs: any[] = [];
   logs: any[] = [];
 
-  constructor(private logMonitorService: LogMonitorService) {
-    this.logMonitorService.logObservable.subscribe((logs) => {
-      this.allLogs = logs;
-      this.filterLogs();
-    });
+  constructor(private clashService: ClashService, private logMonitorService: LogMonitorService) {
+    if (this.clashService.isClashConnected) {
+      this.logMonitorService.logsObservable.subscribe((logs) => {
+        this.allLogs = logs;
+        this.filterLogs();
+      });
+    }
   }
 
   ngOnInit(): void {}

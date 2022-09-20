@@ -1,4 +1,5 @@
 import { Component, OnInit } from "@angular/core";
+import { ClashService } from "src/app/core/service/clash.service";
 import { Provider, ProvidersService } from "src/app/core/service/providers.service";
 import { ProxyService } from "src/app/core/service/proxy.service";
 
@@ -16,13 +17,14 @@ export class ProxyComponent implements OnInit {
     vehicleType: "string"
   };
 
-  constructor(private proxyService: ProxyService, private providersService: ProvidersService) {}
+  constructor(private clashService: ClashService, private proxyService: ProxyService, private providersService: ProvidersService) {}
 
   ngOnInit(): void {
-    this.providersService.getProviders().subscribe((providers) => {
-      this.providers = providers;
-      this.provider = providers[0];
-    });
+    if (this.clashService.isClashConnected)
+      this.providersService.getProviders().subscribe((providers) => {
+        this.providers = providers;
+        this.provider = providers[0];
+      });
 
     // this.proxyService.getProxyGroups().subscribe(proxyGroups => {
     //   console.log(proxyGroups)

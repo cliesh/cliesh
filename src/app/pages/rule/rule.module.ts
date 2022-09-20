@@ -11,4 +11,4 @@ import { RuleComponent } from "./rule.component";
   declarations: [RuleComponent],
   imports: [BrowserModule, FormsModule, NzSpinModule, NzEmptyModule, NzListModule, NzInputModule]
 })
-export class RueModule {}
+export class RuleModule {}

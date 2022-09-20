@@ -1,5 +1,6 @@
 import { Component, OnInit } from "@angular/core";
-import { SettingService } from "src/app/core/service/setting.service";
+import { ClashService } from "src/app/core/service/clash.service";
+import { SettingService, Version } from "src/app/core/service/setting.service";
 
 @Component({
   selector: "app-setting",
@@ -7,7 +8,15 @@ import { SettingService } from "src/app/core/service/setting.service";
   styleUrls: ["./setting.component.scss"]
 })
 export class SettingComponent implements OnInit {
-  constructor(private settingService: SettingService) {}
+  clashVersion: Version | undefined;
+
+  constructor(private clashService: ClashService, private settingService: SettingService) {
+    if (this.clashService.isClashConnected) {
+      this.settingService.getVersion().subscribe((version) => {
+        this.clashVersion = version;
+      });
+    }
+  }
 
   ngOnInit(): void {}
 }

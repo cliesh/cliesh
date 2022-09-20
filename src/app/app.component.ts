@@ -2,6 +2,7 @@ import { Component } from "@angular/core";
 import { ipcRenderer } from "electron";
 import { platform } from "os";
 import { ConfigManager } from "./core/manager/config.manager";
+import { ClashService } from "./core/service/clash.service";
 import { Traffic, TrafficMonitorService } from "./core/service/monitor-traffic.service";
 
 @Component({
@@ -17,7 +18,7 @@ export class AppComponent {
   version: string = "unknown";
   traffic: Traffic = { up: 0, down: 0 };
 
-  constructor(configManager: ConfigManager, private trafficMonitorService: TrafficMonitorService) {
+  constructor(configManager: ConfigManager, private clashService: ClashService, private trafficMonitorService: TrafficMonitorService) {
     this.platform = platform();
     this.version = configManager.version;
     this.trafficMonitorService.trafficObservable.subscribe((traffic) => {

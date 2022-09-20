@@ -2,7 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { map, repeat } from "rxjs";
 import { Observable } from "rxjs/internal/Observable";
-import { ClashApiAuthInfrastructure } from "../infrastructure/clash-api-auth.infrastructure";
+import { ClashManager } from "../manager/clash.manager";
 import { Traffic } from "./monitor-traffic.service";
 
 export interface Metadata {
@@ -43,12 +43,14 @@ export interface Connectmation {
 export class ConnectionService {
   private histories = new Map<string, Traffic>();
 
-  connectionsObservable = this.getConnections().pipe(repeat({ delay: 1000 }));
+  constructor(private clashManager: ClashManager, private httpClient: HttpClient) { }
 
-  constructor(private httpClient: HttpClient, private clashApiAuthoriiizationService: ClashApiAuthInfrastructure) {}
+  get connectionsObservable(): Observable<Connectmation> {
+    return this.getConnections().pipe(repeat({ delay: 1000 }));
+  }
 
   private getConnections(): Observable<Connectmation> {
-    return (this.httpClient.get("/connections", this.clashApiAuthoriiizationService.authorizationHeader).pipe(
+    return this.httpClient.get(`${this.clashManager.baseUrl}/connections`, { headers: this.clashManager.authorizationHeaders }).pipe(
       map((data: any) => {
         const connections = data.connections.map((connection: Connection) => {
           const traffic = this.calculateTraffic(connection);
@@ -73,15 +75,15 @@ export class ConnectionService {
           uploadTotal: data.uploadTotal
         };
       })
-    ) as unknown) as Observable<Connectmation>;
+    ) as unknown as Observable<Connectmation>;
   }
 
   closeAllConnections(): Observable<void> {
-    return (this.httpClient.delete("/connections", this.clashApiAuthoriiizationService.authorizationHeader) as unknown) as Observable<void>;
+    return this.httpClient.delete(`${this.clashManager.baseUrl}/connections`, this.clashManager.authorizationHeaders) as unknown as Observable<void>;
   }
 
   closeConnection(connectionId: string): Observable<void> {
-    return (this.httpClient.delete(`/connections/${connectionId}`, this.clashApiAuthoriiizationService.authorizationHeader) as unknown) as Observable<void>;
+    return this.httpClient.delete(`${this.clashManager.baseUrl}/connections/${connectionId}`, this.clashManager.authorizationHeaders) as unknown as Observable<void>;
   }
 
   private calculateTraffic(connection: Connection): Traffic {

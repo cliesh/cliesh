@@ -1,4 +1,5 @@
 import config from "config";
+import fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
@@ -7,7 +8,14 @@ export class ConfigManager {
     return this.get<string>("version", "unknown");
   }
 
-  get homeDirectory(): string {
+  /**
+   * clash version in package
+   */
+  get clashVersionInPackage(): string {
+    return this.get<string>("clash-version", "unknown");
+  }
+
+  private get homeDirectory(): string {
     const homeDir = config.get<string>("home.directory");
     return path.join(os.homedir(), homeDir);
   }
@@ -18,17 +26,30 @@ export class ConfigManager {
 
   get loggerDirectory(): string {
     const loggerDir = config.get<string>("logger.directory");
-    return path.join(this.homeDirectory, loggerDir);
+    const absolutePath = path.join(this.homeDirectory, loggerDir);
+    if (!fs.existsSync(absolutePath)) fs.mkdirSync(absolutePath, { recursive: true });
+    return absolutePath;
   }
 
   get clashDirectory(): string {
     const clashDir = config.get<string>("home.clash.directory");
-    return path.join(this.homeDirectory, clashDir);
+    const absolutePath = path.join(this.homeDirectory, clashDir);
+    if (!fs.existsSync(absolutePath)) fs.mkdirSync(absolutePath, { recursive: true });
+    return absolutePath;
+  }
+
+  get profilesDirectory(): string {
+    const clashDir = config.get<string>("home.data.profiles.directory");
+    const absolutePath = path.join(this.homeDirectory, clashDir);
+    if (!fs.existsSync(absolutePath)) fs.mkdirSync(absolutePath, { recursive: true });
+    return absolutePath;
   }
 
   get settingDirectory(): string {
     const settingDir = config.get<string>("home.setting.directory");
-    return path.join(this.homeDirectory, settingDir);
+    const absolutePath = path.join(this.homeDirectory, settingDir);
+    if (!fs.existsSync(absolutePath)) fs.mkdirSync(absolutePath, { recursive: true });
+    return absolutePath;
   }
 
   get databasePath(): string {

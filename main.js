@@ -1,7 +1,53 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
+const contextMenu = require("electron-context-menu");
 
 let appWindow;
 let isAlwaysOnTop = false;
+
+contextMenu({
+  showInspectElement: false,
+  showSelectAll: false,
+  showCopyImage: false,
+  showSaveImageAs: false,
+  showLearnSpelling: false,
+  showLookUpSelection: false,
+  showSearchWithGoogle: false,
+  menu: (actions, params, browserWindow) => [],
+  prepend: (defaultActions, parameters, browserWindow, event) => [
+    {
+      label: "edit",
+      visible: stringEndWith(parameters.titleText, "file") || stringEndWith(parameters.titleText, "connection"),
+      click: () => {
+        let name = parameters.titleText.substring(0, parameters.titleText.indexOf("\n"));
+        appWindow.webContents.send("profiles", "edit", name);
+      }
+    },
+    {
+      label: "coder",
+      visible: stringEndWith(parameters.titleText, "local file") || stringEndWith(parameters.titleText, "remote file"),
+      click: () => {
+        let name = parameters.titleText.substring(0, parameters.titleText.indexOf("\n"));
+        appWindow.webContents.send("profiles", "coder", name);
+      }
+    },
+    {
+      label: "sync",
+      visible: stringEndWith(parameters.titleText, "remote file"),
+      click: () => {
+        let name = parameters.titleText.substring(0, parameters.titleText.indexOf("\n"));
+        appWindow.webContents.send("profiles", "sync", name);
+      }
+    },
+    {
+      label: "delete",
+      visible: stringEndWith(parameters.titleText, "file") || stringEndWith(parameters.titleText, "connection"),
+      click: () => {
+        let name = parameters.titleText.substring(0, parameters.titleText.indexOf("\n"));
+        appWindow.webContents.send("profiles", "delete", name);
+      }
+    }
+  ]
+});
 
 function createWindow() {
   appWindow = new BrowserWindow({
@@ -19,7 +65,8 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      webSecurity: false
+      webSecurity: false,
+      spellcheck: false,
     }
   });
 
@@ -67,3 +114,8 @@ app.whenReady().then(() => {
     }
   });
 });
+
+
+function stringEndWith(str, suffix) {
+  return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
