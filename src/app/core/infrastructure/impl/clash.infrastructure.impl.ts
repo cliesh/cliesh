@@ -4,7 +4,7 @@ import getPort from "get-port";
 import { getLogger } from "log4js";
 import * as os from "os";
 import * as path from "path";
-import { BehaviorSubject, timer } from "rxjs";
+import { BehaviorSubject, skip, timer } from "rxjs";
 import { Stream } from "stream";
 import { v4 as uuidv4 } from "uuid";
 import { ClashInfrastructure, ClashProcessControllerEntry, ClashStatus } from "../clash.infrastructure";
@@ -19,7 +19,7 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
   private arch = os.arch();
 
   private clashStatusChangedBehaviorSubject = new BehaviorSubject<ClashStatus>("stopped");
-  clashStatusChangedObservable = this.clashStatusChangedBehaviorSubject.asObservable();
+  clashStatusChanged$ = this.clashStatusChangedBehaviorSubject.asObservable();
 
   private clashProcess: ExecaChildProcess<string> | undefined;
 
@@ -78,11 +78,38 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
     else return path.join(this.configInfrastructure.clashDirectory, "clash");
   }
 
-  constructor(private configInfrastructure: ConfigInfrastructure, private settingInfrastructure: SettingInfrastructure) {}
+  constructor(private configInfrastructure: ConfigInfrastructure, private settingInfrastructure: SettingInfrastructure) {
+    this.clashStatusChangedBehaviorSubject
+      .asObservable()
+      .pipe(skip(1))
+      .subscribe({
+        next: (status) => {
+          logger.info(`clash status has been changed: ${status}`);
+          switch (status) {
+            case "stopped":
+              this.currentControllerEntry = undefined;
+              if (this.currentStatus !== "stopping") {
+                logger.error(`clash exited unexpectedly, will restart it after 3 seconds`);
+                setTimeout(() => {
+                  if (this.currentStatus === "stopped") this.startClash(this.currentProfilePath!);
+                }, 3000);
+              }
+              break;
+            default:
+              break;
+          }
+          this.currentStatus = status;
+        }
+      });
+  }
 
-  public async startClash(profilePath: string): Promise<ClashProcessControllerEntry> {
+  currentStatus: ClashStatus = "stopped";
+  private currentProfilePath: string | undefined;
+  currentControllerEntry: ClashProcessControllerEntry | undefined;
+
+  public async startClash(profilePath: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
-      if (this.clashProcess != undefined && !this.clashProcess?.killed) {
+      if (this.currentStatus === "running") {
         logger.error("Clash is already running");
         reject("Clash is already running");
         return;
@@ -106,16 +133,18 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
         });
         this.clashProcess.stdout!.pipe(
           new Stream.Writable({
-            write: function (chunk, encoding, callback) {
-              clashLogger.info(`\n${chunk}\n`);
+            write: (chunk, encoding, callback) => {
+              const lines = chunk.toString().split("\n");
+              this.outputClashLog(lines);
               callback();
             }
           })
         );
         this.clashProcess.stderr!.pipe(
           new Stream.Writable({
-            write: function (chunk, encoding, callback) {
-              clashLogger.error(`\n${chunk}\n`);
+            write: (chunk, encoding, callback) => {
+              const lines = chunk.toString().split("\n");
+              this.outputClashLog(lines);
               callback();
             }
           })
@@ -128,8 +157,9 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
           }
           this.clashStatusChangedBehaviorSubject.next("stopped");
         });
+        this.currentProfilePath = profilePath;
+        this.currentControllerEntry = { port: port, secret: secret };
         this.clashStatusChangedBehaviorSubject.next("running");
-        resolve({ port: port, secret: secret });
       } catch (e) {
         this.clashStatusChangedBehaviorSubject.next("stopped");
         logger.error("Start clash failed: ", e);
@@ -138,14 +168,15 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
     });
   }
 
-  async restartClash(profilePath: string): Promise<ClashProcessControllerEntry> {
+  async restartClash(profilePath: string): Promise<void> {
     await this.stopClash();
-    return await this.startClash(profilePath);
+    await this.startClash(profilePath);
   }
 
   stopClash(): Promise<void> {
-    if (this.clashProcess === undefined || this.clashProcess.killed) return Promise.resolve();
+    if (this.currentStatus !== "running") return Promise.resolve();
     return new Promise((resolve, reject) => {
+      this.clashStatusChangedBehaviorSubject.next("stopping");
       const killResult = this.clashProcess!.kill();
       if (!killResult) {
         reject();
@@ -159,6 +190,31 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
           }
         }
       });
+    });
+  }
+
+  clashLogRegex = /^time=".*" level=(\w+) msg="(.*)"$/;
+
+  private outputClashLog(lines: string[]) {
+    lines.forEach((line: string) => {
+      if (line.trim() === "") return;
+      const match = line.match(this.clashLogRegex);
+      if (match !== null) {
+        switch (match[1]) {
+          case "info":
+            clashLogger.info(match[2]);
+            break;
+          case "warning":
+            clashLogger.warn(match[2]);
+            break;
+          case "error":
+            clashLogger.error(match[2]);
+            break;
+          default:
+            clashLogger.warn("[unknown log level]: ", match[2]);
+            break;
+        }
+      }
     });
   }
 

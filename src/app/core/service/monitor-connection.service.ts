@@ -43,9 +43,9 @@ export interface Connectmation {
 export class ConnectionService {
   private histories = new Map<string, Traffic>();
 
-  constructor(private clashManager: ClashManager, private httpClient: HttpClient) { }
+  constructor(private clashManager: ClashManager, private httpClient: HttpClient) {}
 
-  get connectionsObservable(): Observable<Connectmation> {
+  get connections$(): Observable<Connectmation> {
     return this.getConnections().pipe(repeat({ delay: 1000 }));
   }
 

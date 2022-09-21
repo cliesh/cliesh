@@ -19,15 +19,16 @@ export class ProxyComponent implements OnInit {
 
   constructor(private clashService: ClashService, private proxyService: ProxyService, private providersService: ProvidersService) {}
 
-  ngOnInit(): void {
-    if (this.clashService.isClashConnected)
+  async ngOnInit(): Promise<void> {
+    if (await this.clashService.isRunningOrConnected()) {
       this.providersService.getProviders().subscribe((providers) => {
         this.providers = providers;
         this.provider = providers[0];
       });
 
-    // this.proxyService.getProxyGroups().subscribe(proxyGroups => {
-    //   console.log(proxyGroups)
-    // })
+      // this.proxyService.getProxyGroups().subscribe(proxyGroups => {
+      //   console.log(proxyGroups)
+      // })
+    }
   }
 }

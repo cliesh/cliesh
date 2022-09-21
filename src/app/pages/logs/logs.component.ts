@@ -1,4 +1,5 @@
 import { Component, OnInit } from "@angular/core";
+import { Subscription } from "rxjs";
 import { ClashService } from "src/app/core/service/clash.service";
 import { LogMonitorService } from "src/app/core/service/monitor-log.service";
 
@@ -9,20 +10,21 @@ import { LogMonitorService } from "src/app/core/service/monitor-log.service";
 })
 export class LogsComponent implements OnInit {
   level = "info";
+  private clashStatusSubscription: Subscription | undefined;
 
   private allLogs: any[] = [];
   logs: any[] = [];
 
-  constructor(private clashService: ClashService, private logMonitorService: LogMonitorService) {
-    if (this.clashService.isClashConnected) {
+  constructor(private clashService: ClashService, private logMonitorService: LogMonitorService) {}
+
+  async ngOnInit(): Promise<void> {
+    if (await this.clashService.isRunningOrConnected()) {
       this.logMonitorService.logsObservable.subscribe((logs) => {
         this.allLogs = logs;
         this.filterLogs();
       });
     }
   }
-
-  ngOnInit(): void {}
 
   filterLogs() {
     this.logs = this.allLogs.filter((log) => {
@@ -37,5 +39,9 @@ export class LogsComponent implements OnInit {
 
   trackById(index: number, item: any): number {
     return item.id;
+  }
+
+  ngOnDestroy(): void {
+    this.clashStatusSubscription?.unsubscribe();
   }
 }

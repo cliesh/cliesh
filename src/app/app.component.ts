@@ -1,5 +1,6 @@
 import { Component } from "@angular/core";
 import { ipcRenderer } from "electron";
+import { getLogger } from "log4js";
 import { platform } from "os";
 import { Subscription } from "rxjs";
 import { ConfigManager } from "./core/manager/config.manager";
@@ -12,6 +13,8 @@ import { Traffic, TrafficMonitorService } from "./core/service/monitor-traffic.s
   styleUrls: ["./app.component.scss"]
 })
 export class AppComponent {
+  private logger = getLogger("AppComponent");
+
   isMaximize = false;
   isAlwaysOnTop = false;
 
@@ -23,17 +26,16 @@ export class AppComponent {
     this.platform = platform();
     this.version = configManager.version;
 
-    // todo: remote clash status
-
-    this.clashService.localClashStatusChangedObservable.subscribe({
+    this.clashService.clashStatusChanged$.subscribe({
       next: (status) => {
         switch (status) {
+          case "connected":
           case "running":
+            this.distoryTrafficMonitor();
             this.createTrafficMonitor();
             break;
           default:
-            this.trafficMonitor?.unsubscribe();
-            this.trafficMonitor = undefined;
+            this.distoryTrafficMonitor();
             break;
         }
       }
@@ -43,11 +45,16 @@ export class AppComponent {
   trafficMonitor: Subscription | undefined;
 
   createTrafficMonitor(): void {
-    this.trafficMonitor = this.trafficMonitorService.trafficObservable.subscribe({
+    this.trafficMonitor = this.trafficMonitorService.traffic$.subscribe({
       next: (traffic) => {
         this.traffic = traffic;
       }
     });
+  }
+
+  distoryTrafficMonitor(): void {
+    this.trafficMonitor?.unsubscribe();
+    this.trafficMonitor = undefined;
   }
 
   ngOnInit(): void {
@@ -91,6 +98,7 @@ export class AppComponent {
   }
 
   exit(): void {
+    this.logger.info("Application exit requested\n");
     ipcRenderer.invoke("window", "close");
   }
 }

@@ -30,8 +30,8 @@ export type LogLevel = "info" | "warn" | "error" | "debug";
   providedIn: "root"
 })
 export class LogMonitorService {
-  private logBehaviorSubject = new BehaviorSubject<Log[]>([]);
-  private logObservable = this.logBehaviorSubject.asObservable();
+  private logsBehaviorSubject = new BehaviorSubject<Log[]>([]);
+  private logs$ = this.logsBehaviorSubject.asObservable();
 
   private logInfoTCPOrUDPContentRegex = /\[(.*)\]\s(\S*)\s\-\-\>\s(\S*)\smatch\s(.*)\susing\s(.*)/;
   private logDebugDNSContentRegex = /\[(.*)\]\s(\S*)\s\-\-\>\s(\S*)/;
@@ -49,7 +49,7 @@ export class LogMonitorService {
     this.logsReader = undefined;
     this.requestController?.abort();
     this.initLogsReader();
-    return this.logObservable;
+    return this.logs$;
   }
 
   private initLogsReader() {
@@ -81,7 +81,7 @@ export class LogMonitorService {
             });
           else this.recordLogFromString(logsString);
           if (this.logs.length > 300) this.logs.pop();
-          this.logBehaviorSubject.next(this.logs);
+          this.logsBehaviorSubject.next(this.logs);
         })
         .catch((error) => {
           const isJsonUnexpected = this.jsonUnexpectedRegex.test(error.message);
@@ -143,7 +143,7 @@ export class LogMonitorService {
 
   clearLogs() {
     this.logs = [];
-    this.logBehaviorSubject.next(this.logs);
+    this.logsBehaviorSubject.next(this.logs);
   }
 
   /**

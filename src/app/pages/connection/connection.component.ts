@@ -31,16 +31,16 @@ export class ConnectionComponent implements OnInit {
 
   constructor(private clashService: ClashService, private connectionService: ConnectionService, private message: NzMessageService, private modal: NzModalService) {}
 
-  ngOnInit(): void {
-    if (this.clashService.isClashConnected) {
-      this.connectionsSubscription = this.connectionService.connectionsObservable.subscribe((connections) => {
+  async ngOnInit(): Promise<void> {
+    if (await this.clashService.isRunningOrConnected()) {
+      this.connectionsSubscription = this.connectionService.connections$.subscribe((connections) => {
         this.uploadTotal = connections.uploadTotal;
         this.downloadTotal = connections.downloadTotal;
         this.allConnections = connections.connections;
         this.filterAndSortConnections();
         this.loadding = false;
       });
-    }else{
+    } else {
       this.loadding = false;
     }
   }
