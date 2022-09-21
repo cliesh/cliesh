@@ -1,4 +1,4 @@
-<div class="profile {{ selected ? 'active' : '' }}" *ngIf="fileProfile" draggable="true" title="{{ fileProfile.name }}&#10;{{ type }}" (click)="selectProfile()">
+<div class="profile {{ loadding ? 'loadding' : '' }} {{ selected ? 'active' : '' }}" *ngIf="fileProfile" draggable="true" title="{{ fileProfile.name }}&#10;{{ type }}" (click)="selectProfile()">
   <div class="title">
     {{ fileProfile.name }}
   </div>
@@ -11,7 +11,7 @@
   </div>
 </div>
 
-<div class="profile {{ selected ? 'active' : '' }}" *ngIf="remoteProfile" title="{{ remoteProfile.name }}&#10;{{ type }}" draggable="true" (click)="selectProfile()">
+<div class="profile {{ loadding ? 'loadding' : '' }} {{ selected ? 'active' : '' }}" *ngIf="remoteProfile" title="{{ remoteProfile.name }}&#10;{{ type }}" draggable="true" (click)="selectProfile()">
   <div class="title">
     {{ remoteProfile.name }}
   </div>

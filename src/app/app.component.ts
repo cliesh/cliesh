@@ -45,6 +45,7 @@ export class AppComponent {
   trafficMonitor: Subscription | undefined;
 
   createTrafficMonitor(): void {
+    this.traffic = { up: 0, down: 0 };
     this.trafficMonitor = this.trafficMonitorService.traffic$.subscribe({
       next: (traffic) => {
         this.traffic = traffic;

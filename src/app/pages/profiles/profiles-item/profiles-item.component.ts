@@ -1,4 +1,6 @@
 import { Component, Input, OnInit } from "@angular/core";
+import { firstValueFrom, timer } from "rxjs";
+import { NotificationService } from "src/app/core/service/notification.service";
 import { FileProfile, Profile, ProfilesService, RemoteProfile } from "src/app/core/service/profiles.service";
 
 @Component({
@@ -10,12 +12,13 @@ export class ProfilesItemComponent implements OnInit {
   @Input()
   profile?: Profile;
   selected: boolean = false;
+  loadding: boolean = false;
 
   type: string = "unknown";
   fileProfile?: FileProfile;
   remoteProfile?: RemoteProfile;
 
-  constructor(private profilesService: ProfilesService) {}
+  constructor(private profilesService: ProfilesService, private notificationService: NotificationService) { }
 
   ngOnInit(): void {
     this.profilesService.profileSelectedChanged$.subscribe((selectedProfile) => {
@@ -35,8 +38,17 @@ export class ProfilesItemComponent implements OnInit {
     }
   }
 
-  selectProfile(): void {
+  async selectProfile(): Promise<void> {
     if (this.selected) return;
-    this.profilesService.selectProfile(this.profile!.id);
+    try {
+      this.loadding = true;
+      // for ui animation
+      await firstValueFrom(timer(1000));
+      await this.profilesService.selectProfile(this.profile!.id);
+    } catch (e: any) {
+      this.notificationService.notification("Change profile failed", e.message);
+    } finally {
+      this.loadding = false;
+    }
   }
 }

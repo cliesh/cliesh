@@ -25,6 +25,7 @@
     "electron-context-menu": "^3.5.0",
     "execa": "^6.1.0",
     "get-port": "^6.1.2",
+    "js-yaml": "^4.1.0",
     "log4js": "^6.6.1",
     "ng-zorro-antd": "^14.0.0",
     "rxjs": "~7.5.6",
