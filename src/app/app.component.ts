@@ -1,6 +1,7 @@
 import { Component } from "@angular/core";
 import { ipcRenderer } from "electron";
 import { platform } from "os";
+import { Subscription } from "rxjs";
 import { ConfigManager } from "./core/manager/config.manager";
 import { ClashService } from "./core/service/clash.service";
 import { Traffic, TrafficMonitorService } from "./core/service/monitor-traffic.service";
@@ -21,8 +22,31 @@ export class AppComponent {
   constructor(configManager: ConfigManager, private clashService: ClashService, private trafficMonitorService: TrafficMonitorService) {
     this.platform = platform();
     this.version = configManager.version;
-    this.trafficMonitorService.trafficObservable.subscribe((traffic) => {
-      this.traffic = traffic;
+
+    // todo: remote clash status
+
+    this.clashService.localClashStatusChangedObservable.subscribe({
+      next: (status) => {
+        switch (status) {
+          case "running":
+            this.createTrafficMonitor();
+            break;
+          default:
+            this.trafficMonitor?.unsubscribe();
+            this.trafficMonitor = undefined;
+            break;
+        }
+      }
+    });
+  }
+
+  trafficMonitor: Subscription | undefined;
+
+  createTrafficMonitor(): void {
+    this.trafficMonitor = this.trafficMonitorService.trafficObservable.subscribe({
+      next: (traffic) => {
+        this.traffic = traffic;
+      }
     });
   }
 

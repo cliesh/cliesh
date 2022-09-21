@@ -1,8 +1,6 @@
 import { getLogger } from "log4js";
 import { BehaviorSubject } from "rxjs";
 import { ClashInfrastructure } from "../infrastructure/clash.infrastructure";
-import { ConfigManager } from "./config.manager";
-import { SettingManager } from "./setting.manager";
 
 export type ClashType = "local" | "remote";
 
@@ -24,7 +22,10 @@ export interface RemoteClashConfig extends ClashConfig {
 }
 
 export class ClashManager {
-  logger = getLogger("ClashManager");
+  private logger = getLogger("ClashManager");
+
+  private isLocalClashRunning: boolean = false;
+  localClashStatusChangedObservable = this.clashInfrastructure.clashStatusChangedObservable;
 
   private schema: string | undefined;
   private host: string | undefined;
@@ -41,22 +42,27 @@ export class ClashManager {
     } else {
       return {
         Authorization: `Bearer ${this.authorizationToken}`
-      }
-    };
+      };
+    }
   }
 
   private clashConfigChangedBehaviorSubject = new BehaviorSubject<undefined | true>(undefined);
   clashConfigChangedObservable = this.clashConfigChangedBehaviorSubject.asObservable();
 
-  constructor(private clashInfrastructure: ClashInfrastructure, private configManager: ConfigManager, private settingManager: SettingManager) { }
+  constructor(private clashInfrastructure: ClashInfrastructure) {
+    this.clashInfrastructure.clashStatusChangedObservable.subscribe({
+      next: (status) => {
+        this.isLocalClashRunning = status === "running";
+      }
+    });
+  }
 
   async changeConfig(config: LocalClashConfig | RemoteClashConfig): Promise<void> {
     if (config.clashType === "local") {
-      await this.makeSureInstalledClashVersionIsLasted();
       await this.changeToLocalClashConfig(config as LocalClashConfig);
     } else {
       await this.changeToRemoteClashConfig(config as RemoteClashConfig);
-      if (this.clashInfrastructure.isClashRunning) this.clashInfrastructure.stopClash();
+      if (this.isLocalClashRunning) this.clashInfrastructure.stopClash();
     }
     this.resetSystemProxy();
     this.clashConfigChangedBehaviorSubject.next(true);
@@ -83,15 +89,6 @@ export class ClashManager {
       return this.baseUrl !== undefined;
     } catch (error) {
       return false;
-    }
-  }
-
-  private async makeSureInstalledClashVersionIsLasted(): Promise<void> {
-    const programInstalled = this.clashInfrastructure.clashInstalled;
-    const programVersionMatched = this.settingManager.clashVersionInstalled === this.configManager.clashVersionInPackage;
-    if (!programInstalled || !programVersionMatched) {
-      await this.clashInfrastructure.installClash();
-      this.settingManager.setClashVersionInstalled(this.configManager.clashVersionInPackage);
     }
   }
 

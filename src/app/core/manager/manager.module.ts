@@ -1,36 +1,32 @@
 import { CommonModule } from "@angular/common";
 import { NgModule } from "@angular/core";
 import { ClashInfrastructure } from "../infrastructure/clash.infrastructure";
+import { ConfigInfrastructure } from "../infrastructure/config.infrastructure";
+import { InfrastructureModule } from "../infrastructure/infrastructure.module";
+import { SettingInfrastructure } from "../infrastructure/setting.infrastructure";
 import { ClashManager } from "./clash.manager";
 import { ConfigManager } from "./config.manager";
-import { LoggerManager } from "./logger.manager";
 import { SettingManager } from "./setting.manager";
 
 @NgModule({
   declarations: [],
-  imports: [CommonModule],
+  imports: [CommonModule, InfrastructureModule],
   providers: [
     {
       provide: ClashManager,
-      useFactory: (clashInfrastructure: ClashInfrastructure, configManager: ConfigManager, settingManager: SettingManager) =>
-        new ClashManager(clashInfrastructure, configManager, settingManager),
-      deps: [ClashInfrastructure, ConfigManager, SettingManager]
-    },
-    {
-      provide: LoggerManager,
-      useFactory: () => new LoggerManager()
+      useFactory: (clashInfrastructure: ClashInfrastructure) => new ClashManager(clashInfrastructure),
+      deps: [ClashInfrastructure]
     },
     {
       provide: ConfigManager,
-      useFactory: () => new ConfigManager()
+      useFactory: (configInfrastructure: ConfigInfrastructure) => new ConfigManager(configInfrastructure),
+      deps: [ConfigInfrastructure]
     },
     {
       provide: SettingManager,
-      useFactory: (configManager: ConfigManager) => new SettingManager(configManager.settingDirectory),
-      deps: [ConfigManager]
+      useFactory: (settingInfrastructure: SettingInfrastructure) => new SettingManager(settingInfrastructure),
+      deps: [SettingInfrastructure]
     }
   ]
 })
-export class ManagerModule {
-  constructor() {}
-}
+export class ManagerModule {}

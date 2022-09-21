@@ -1,8 +1,14 @@
 import { configure } from "log4js";
 import * as path from "path";
+import { ConfigInfrastructure } from "../config.infrastructure";
+import { LoggerInfrastructure } from "../logger.infrastructure";
 
-export class LoggerManager {
-  configureLogger(directory: string, level: string) {
+export class LoggerInfrastructureImpl implements LoggerInfrastructure {
+  constructor(configInfrastructure: ConfigInfrastructure) {
+    this.configureLogger(configInfrastructure.loggerDirectory, configInfrastructure.logLevel);
+  }
+
+  private configureLogger(directory: string, level: string): void {
     configure({
       appenders: {
         cheese: {

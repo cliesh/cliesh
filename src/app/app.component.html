@@ -48,7 +48,7 @@
         </span>
       </li>
     </ul>
-    <div class="traffic">
+    <div class="traffic {{ trafficMonitor === undefined ? 'hide' : '' }}">
       <div>
         {{ traffic.up | formatBytes }}/s
         <img src="../assets/arrow/arrow.png" />

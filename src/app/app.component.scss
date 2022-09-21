@@ -214,6 +214,7 @@ nz-header {
   font-size: 12px;
   cursor: default;
   user-select: none;
+  transition: bottom 0.3s;
 
   div:first-child {
     float: right;
@@ -234,4 +235,8 @@ nz-header {
       transform: rotate(-135deg);
     }
   }
+}
+
+.traffic.hide {
+  bottom: -80px;
 }

@@ -7,7 +7,9 @@ import { FileProfile, Profile, ProfilesService, RemoteProfile } from "./profiles
   providedIn: "root"
 })
 export class ClashService {
-  logger = getLogger("ClashService");
+  private logger = getLogger("ClashService");
+
+  localClashStatusChangedObservable = this.clashManager.localClashStatusChangedObservable;
 
   constructor(private profilesService: ProfilesService, private clashManager: ClashManager) {
     this.profilesService.profileSelectedChangedObservable.subscribe((profile) => {
