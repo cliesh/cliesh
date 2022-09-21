@@ -1,10 +1,9 @@
 import { getLogger } from "log4js";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, firstValueFrom, timer } from "rxjs";
 import { ClashInfrastructure } from "../infrastructure/clash.infrastructure";
-import { ConfigManager } from "./config.manager";
-import { SettingManager } from "./setting.manager";
 
 export type ClashType = "local" | "remote";
+export type RemoteClashStatus = "connected" | "disconnected";
 
 export interface ClashConfig {
   clashType: ClashType;
@@ -24,7 +23,13 @@ export interface RemoteClashConfig extends ClashConfig {
 }
 
 export class ClashManager {
-  logger = getLogger("ClashManager");
+  private logger = getLogger("ClashManager");
+
+  localClashStatusChanged$ = this.clashInfrastructure.clashStatusChanged$;
+
+  private isRemoteClashConnected: boolean = false;
+  private remoteClashStatusChangedBehaviorSubject = new BehaviorSubject<RemoteClashStatus>("disconnected");
+  remoteClashStatusChanged$ = this.remoteClashStatusChangedBehaviorSubject.asObservable();
 
   private schema: string | undefined;
   private host: string | undefined;
@@ -41,58 +46,64 @@ export class ClashManager {
     } else {
       return {
         Authorization: `Bearer ${this.authorizationToken}`
-      }
-    };
+      };
+    }
   }
 
   private clashConfigChangedBehaviorSubject = new BehaviorSubject<undefined | true>(undefined);
-  clashConfigChangedObservable = this.clashConfigChangedBehaviorSubject.asObservable();
+  clashConfigChanged$ = this.clashConfigChangedBehaviorSubject.asObservable();
 
-  constructor(private clashInfrastructure: ClashInfrastructure, private configManager: ConfigManager, private settingManager: SettingManager) { }
+  constructor(private clashInfrastructure: ClashInfrastructure) {
+    this.clashInfrastructure.clashStatusChanged$.subscribe({
+      next: (status) => {
+        switch (status) {
+          case "running":
+            this.schema = "http://";
+            this.host = "127.0.0.1";
+            this.port = this.clashInfrastructure.currentControllerEntry!.port;
+            this.authorizationToken = this.clashInfrastructure.currentControllerEntry!.secret;
+            break;
+          default:
+            break;
+        }
+      }
+    });
+  }
 
   async changeConfig(config: LocalClashConfig | RemoteClashConfig): Promise<void> {
     if (config.clashType === "local") {
-      await this.makeSureInstalledClashVersionIsLasted();
       await this.changeToLocalClashConfig(config as LocalClashConfig);
     } else {
       await this.changeToRemoteClashConfig(config as RemoteClashConfig);
-      if (this.clashInfrastructure.isClashRunning) this.clashInfrastructure.stopClash();
     }
     this.resetSystemProxy();
     this.clashConfigChangedBehaviorSubject.next(true);
   }
 
   private async changeToLocalClashConfig(config: LocalClashConfig): Promise<void> {
-    const entry = await this.clashInfrastructure.restartClash(config.profilePath);
-    this.schema = "http://";
-    this.host = "127.0.0.1";
-    this.port = entry.port;
-    this.authorizationToken = entry.secret;
+    await this.stopLocalClashOrDisconnectRemoteClash();
+    await this.clashInfrastructure.restartClash(config.profilePath);
   }
 
-  private changeToRemoteClashConfig(config: RemoteClashConfig): Promise<void> {
+  private async changeToRemoteClashConfig(config: RemoteClashConfig): Promise<void> {
+    await this.stopLocalClashOrDisconnectRemoteClash();
     this.schema = config.schema;
     this.host = config.host;
     this.port = config.port;
     this.authorizationToken = config.authorization;
+    this.isRemoteClashConnected = true;
+    this.remoteClashStatusChangedBehaviorSubject.next("connected");
     return Promise.resolve();
   }
 
-  get isClashConnected(): boolean {
-    try {
-      return this.baseUrl !== undefined;
-    } catch (error) {
-      return false;
+  private async stopLocalClashOrDisconnectRemoteClash(): Promise<void> {
+    if (this.isRemoteClashConnected) {
+      this.isRemoteClashConnected = false;
+      this.remoteClashStatusChangedBehaviorSubject.next("disconnected");
+      // for ui animation transition
+      await firstValueFrom(timer(1000));
     }
-  }
-
-  private async makeSureInstalledClashVersionIsLasted(): Promise<void> {
-    const programInstalled = this.clashInfrastructure.clashInstalled;
-    const programVersionMatched = this.settingManager.clashVersionInstalled === this.configManager.clashVersionInPackage;
-    if (!programInstalled || !programVersionMatched) {
-      await this.clashInfrastructure.installClash();
-      this.settingManager.setClashVersionInstalled(this.configManager.clashVersionInPackage);
-    }
+    if (this.clashInfrastructure.currentStatus === "running") await this.clashInfrastructure.stopClash();
   }
 
   private resetSystemProxy(): void {

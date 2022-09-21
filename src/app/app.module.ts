@@ -12,8 +12,8 @@ import { NzMenuModule } from "ng-zorro-antd/menu";
 import * as os from "os";
 import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from "./app.component";
-import { ConfigManager } from "./core/manager/config.manager";
-import { LoggerManager } from "./core/manager/logger.manager";
+import { InfrastructureModule } from "./core/infrastructure/infrastructure.module";
+import { LoggerInfrastructure } from "./core/infrastructure/logger.infrastructure";
 import { ManagerModule } from "./core/manager/manager.module";
 import { IconsProviderModule } from "./icons-provider.module";
 import { ConnectionModule } from "./pages/connection/connection.module";
@@ -42,6 +42,7 @@ registerLocaleData(zh);
     LogsModule,
     ProxyModule,
     PipeModule,
+    InfrastructureModule,
     ManagerModule
   ],
   providers: [
@@ -52,7 +53,7 @@ registerLocaleData(zh);
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
-      deps: [ConfigManager, LoggerManager],
+      deps: [LoggerInfrastructure],
       multi: true
     }
   ],
@@ -60,10 +61,8 @@ registerLocaleData(zh);
 })
 export class AppModule {}
 
-export function initializeApp(configManager: ConfigManager, loggerManager: LoggerManager) {
+export function initializeApp(loggerInfrastructure: LoggerInfrastructure) {
   return async (): Promise<void> => {
-    // configure logger
-    loggerManager.configureLogger(configManager.loggerDirectory, configManager.loggerLevel);
     getLogger("APP_INITIALIZER").info("OS information: ", os.platform(), os.arch());
   };
 }

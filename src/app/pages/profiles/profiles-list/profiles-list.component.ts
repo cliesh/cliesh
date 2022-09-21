@@ -11,7 +11,7 @@ export class ProfilesListComponent implements OnInit {
   profilesObservable: Observable<Profile[]>;
 
   constructor(profilesService: ProfilesService) {
-    this.profilesObservable = profilesService.profilesObservable;
+    this.profilesObservable = profilesService.profiles$;
   }
 
   ngOnInit(): void {}

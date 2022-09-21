@@ -1,6 +1,8 @@
 import { Component } from "@angular/core";
 import { ipcRenderer } from "electron";
+import { getLogger } from "log4js";
 import { platform } from "os";
+import { Subscription } from "rxjs";
 import { ConfigManager } from "./core/manager/config.manager";
 import { ClashService } from "./core/service/clash.service";
 import { Traffic, TrafficMonitorService } from "./core/service/monitor-traffic.service";
@@ -11,6 +13,8 @@ import { Traffic, TrafficMonitorService } from "./core/service/monitor-traffic.s
   styleUrls: ["./app.component.scss"]
 })
 export class AppComponent {
+  private logger = getLogger("AppComponent");
+
   isMaximize = false;
   isAlwaysOnTop = false;
 
@@ -21,9 +25,36 @@ export class AppComponent {
   constructor(configManager: ConfigManager, private clashService: ClashService, private trafficMonitorService: TrafficMonitorService) {
     this.platform = platform();
     this.version = configManager.version;
-    this.trafficMonitorService.trafficObservable.subscribe((traffic) => {
-      this.traffic = traffic;
+
+    this.clashService.clashStatusChanged$.subscribe({
+      next: (status) => {
+        switch (status) {
+          case "connected":
+          case "running":
+            this.distoryTrafficMonitor();
+            this.createTrafficMonitor();
+            break;
+          default:
+            this.distoryTrafficMonitor();
+            break;
+        }
+      }
     });
+  }
+
+  trafficMonitor: Subscription | undefined;
+
+  createTrafficMonitor(): void {
+    this.trafficMonitor = this.trafficMonitorService.traffic$.subscribe({
+      next: (traffic) => {
+        this.traffic = traffic;
+      }
+    });
+  }
+
+  distoryTrafficMonitor(): void {
+    this.trafficMonitor?.unsubscribe();
+    this.trafficMonitor = undefined;
   }
 
   ngOnInit(): void {
@@ -67,6 +98,7 @@ export class AppComponent {
   }
 
   exit(): void {
+    this.logger.info("Application exit requested\n");
     ipcRenderer.invoke("window", "close");
   }
 }

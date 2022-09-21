@@ -15,11 +15,10 @@ export class ProfilesItemComponent implements OnInit {
   fileProfile?: FileProfile;
   remoteProfile?: RemoteProfile;
 
-  constructor(private profilesService: ProfilesService) {
-  }
+  constructor(private profilesService: ProfilesService) {}
 
   ngOnInit(): void {
-    this.profilesService.profileSelectedChangedObservable.subscribe((selectedProfile) => {
+    this.profilesService.profileSelectedChanged$.subscribe((selectedProfile) => {
       if (selectedProfile === undefined || this.profile === undefined) return;
       this.selected = selectedProfile!.id === this.profile!.id;
     });
@@ -37,7 +36,7 @@ export class ProfilesItemComponent implements OnInit {
   }
 
   selectProfile(): void {
-    if(this.selected) return;
+    if (this.selected) return;
     this.profilesService.selectProfile(this.profile!.id);
   }
 }

@@ -3,7 +3,6 @@ import { Injectable } from "@angular/core";
 import fs from "fs";
 import path from "path";
 import { BehaviorSubject, timer } from "rxjs";
-import { ClashManager } from "../manager/clash.manager";
 import { ConfigManager } from "../manager/config.manager";
 import { SettingManager } from "../manager/setting.manager";
 
@@ -44,12 +43,12 @@ export interface RemoteProfile extends Profile {
 })
 export class ProfilesService {
   private profilesBehaviorSubject = new BehaviorSubject<Profile[]>([]);
-  profilesObservable = this.profilesBehaviorSubject.asObservable();
+  profiles$ = this.profilesBehaviorSubject.asObservable();
 
   private profileSelectedChangedBehaviorSubject = new BehaviorSubject<Profile | undefined>(this.selectedProfile);
-  profileSelectedChangedObservable = this.profileSelectedChangedBehaviorSubject.asObservable();
+  profileSelectedChanged$ = this.profileSelectedChangedBehaviorSubject.asObservable();
 
-  constructor(private settingManager: SettingManager, private configManager: ConfigManager, private httpClient: HttpClient, private clashManager: ClashManager) {
+  constructor(private settingManager: SettingManager, private configManager: ConfigManager, private httpClient: HttpClient) {
     timer(0, 1000 * 60).subscribe(() => {
       // repeat every 1 minute
       this.profilesBehaviorSubject.next(this.getProfiles());

@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, delay, timer } from "rxjs";
+import { BehaviorSubject, interval, merge, timer } from "rxjs";
 import { ClashManager } from "../manager/clash.manager";
 
 export interface Traffic {
@@ -12,44 +12,48 @@ export interface Traffic {
 })
 export class TrafficMonitorService {
   private trafficBehaviorSubject = new BehaviorSubject<Traffic>({ up: 0, down: 0 });
-  trafficObservable = this.trafficBehaviorSubject.asObservable();
+  traffic$ = this.trafficBehaviorSubject.asObservable();
 
   requestController?: AbortController;
   private trafficReader: ReadableStreamDefaultReader<Uint8Array> | undefined;
 
   constructor(private clashManager: ClashManager) {
     this.monitorTraffic();
-    this.clashManager.clashConfigChangedObservable.pipe(
-      delay(1000)
-    ).subscribe((status) => {
-      if (status === undefined) return;
-      this.trafficReader = undefined;
-      this.requestController?.abort();
-      this.initTrafficReader();
+    merge(this.clashManager.localClashStatusChanged$, this.clashManager.remoteClashStatusChanged$).subscribe({
+      next: (status) => {
+        switch (status) {
+          case "connected":
+          case "running":
+            this.trafficReader = undefined;
+            this.requestController?.abort();
+            this.initTrafficReader();
+            break;
+          default:
+            break;
+        }
+      }
     });
   }
 
   private initTrafficReader() {
     this.requestController = new AbortController();
-    fetch(
-      `${this.clashManager.baseUrl}/traffic`,
-      {
-        headers: this.clashManager.authorizationHeaders,
-        signal: this.requestController.signal
-      }
-    ).then((response) => {
-      this.trafficReader = response.body!.getReader();
-      if (response.status < 200 || response.status >= 300) timer(5000).subscribe(() => this.initTrafficReader());
-    }).catch((error) => {
-      // ignore
-    });
+    fetch(`${this.clashManager.baseUrl}/traffic`, {
+      headers: this.clashManager.authorizationHeaders,
+      signal: this.requestController.signal
+    })
+      .then((response) => {
+        this.trafficReader = response.body!.getReader();
+        if (response.status < 200 || response.status >= 300) timer(5000).subscribe(() => this.initTrafficReader());
+      })
+      .catch((error) => {
+        // ignore
+      });
   }
 
   private monitorTraffic() {
-    timer(0, 1000).subscribe(() => {
+    interval(1000).subscribe(() => {
       if (this.trafficReader === undefined) return;
-      this.trafficReader!
-        .read()
+      this.trafficReader!.read()
         .then((result) => {
           const trafficString = new TextDecoder().decode(result.value);
           const traffic = JSON.parse(trafficString);

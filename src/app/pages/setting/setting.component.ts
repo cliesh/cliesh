@@ -10,13 +10,15 @@ import { SettingService, Version } from "src/app/core/service/setting.service";
 export class SettingComponent implements OnInit {
   clashVersion: Version | undefined;
 
-  constructor(private clashService: ClashService, private settingService: SettingService) {
-    if (this.clashService.isClashConnected) {
-      this.settingService.getVersion().subscribe((version) => {
-        this.clashVersion = version;
+  constructor(private clashService: ClashService, private settingService: SettingService) {}
+
+  async ngOnInit(): Promise<void> {
+    if (await this.clashService.isRunningOrConnected()) {
+      this.settingService.getVersion().subscribe({
+        next: (version) => {
+          this.clashVersion = version;
+        }
       });
     }
   }
-
-  ngOnInit(): void {}
 }
