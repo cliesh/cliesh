@@ -107,7 +107,7 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
         this.clashProcess.stdout!.pipe(
           new Stream.Writable({
             write: function (chunk, encoding, callback) {
-              clashLogger.error(`\n${chunk}\n`);
+              clashLogger.info(`\n${chunk}\n`);
               callback();
             }
           })
@@ -121,7 +121,7 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
           })
         );
         this.clashProcess.addListener("exit", (code, signal) => {
-          if (code === 0) {
+          if (code === 0 || code === null) {
             logger.info("Clash is stopped");
           } else {
             logger.error("Clash is stopped with code: ", code);
