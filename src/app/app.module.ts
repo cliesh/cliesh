@@ -63,6 +63,6 @@ export class AppModule {}
 
 export function initializeApp(loggerInfrastructure: LoggerInfrastructure) {
   return async (): Promise<void> => {
-    getLogger("APP_INITIALIZER").info("OS information: ", os.platform(), os.arch());
+    getLogger("APP_INITIALIZER").mark("OS information: ", os.platform(), os.arch());
   };
 }

@@ -4,7 +4,27 @@ const contextMenu = require("electron-context-menu");
 let appWindow;
 let isAlwaysOnTop = false;
 
-contextMenu({
+let browserWindowConfig = {
+  width: 850,
+  height: 600,
+  minWidth: 850,
+  minHeight: 600,
+  // mac title menu
+  titleBarStyle: "hiddenInset",
+  transparent: true,
+  autoHideMenuBar: false,
+  frame: false,
+  vibrancy: "sidebar",
+  visualEffectState: "followWindow",
+  webPreferences: {
+    nodeIntegration: true,
+    contextIsolation: false,
+    webSecurity: false,
+    spellcheck: false
+  }
+};
+
+let contextMenuConfig = {
   showInspectElement: false,
   showSelectAll: false,
   showCopyImage: false,
@@ -47,28 +67,11 @@ contextMenu({
       }
     }
   ]
-});
+};
 
 function createWindow() {
-  appWindow = new BrowserWindow({
-    width: 850,
-    height: 600,
-    minWidth: 850,
-    minHeight: 600,
-    // mac title menu
-    titleBarStyle: "hiddenInset",
-    transparent: true,
-    autoHideMenuBar: false,
-    frame: false,
-    vibrancy: "sidebar",
-    visualEffectState: "followWindow",
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      webSecurity: false,
-      spellcheck: false,
-    }
-  });
+  contextMenu(contextMenuConfig);
+  appWindow = new BrowserWindow(browserWindowConfig);
 
   if (process.argv.indexOf("--port") > -1) {
     const portIndex = process.argv.indexOf("--port") + 1;
@@ -79,6 +82,16 @@ function createWindow() {
   } else {
     appWindow.loadFile("./dist/index.html");
   }
+}
+
+app.whenReady().then(() => {
+  createWindow();
+  
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      mainWindow = createWindow();
+    }
+  });
 
   ipcMain.handle("window", async (event, arg) => {
     switch (arg) {
@@ -104,17 +117,7 @@ function createWindow() {
         break;
     }
   });
-}
-
-app.whenReady().then(() => {
-  createWindow();
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      mainWindow = createWindow();
-    }
-  });
 });
-
 
 function stringEndWith(str, suffix) {
   return str.indexOf(suffix, str.length - suffix.length) !== -1;

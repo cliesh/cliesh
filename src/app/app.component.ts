@@ -99,7 +99,6 @@ export class AppComponent {
   }
 
   exit(): void {
-    this.logger.info("Application exit requested\n");
     ipcRenderer.invoke("window", "close");
   }
 }

@@ -19,5 +19,8 @@
         "directory": "data/profiles"
       }
     }
+  },
+  "http-timeout": {
+    "sync-profile-from-remote": 10000
   }
 }

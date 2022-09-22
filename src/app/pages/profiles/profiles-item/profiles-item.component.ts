@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from "@angular/core";
-import { firstValueFrom, timer } from "rxjs";
+import { firstValueFrom, take, timer } from "rxjs";
 import { NotificationProvider } from "src/app/core/provider/notification.provider";
 import { FileProfile, Profile, ProfilesService, RemoteProfile } from "src/app/core/service/profiles.service";
 
@@ -24,6 +24,18 @@ export class ProfilesItemComponent implements OnInit {
     this.profilesService.profileSelectedChanged$.subscribe((selectedProfile) => {
       if (selectedProfile === undefined || this.profile === undefined) return;
       this.selected = selectedProfile!.id === this.profile!.id;
+    });
+
+    this.profilesService.profileSyncStatus$.subscribe((profileSyncStatus) => {
+      if (profileSyncStatus === undefined || profileSyncStatus?.profileId !== this.profile?.id) return;
+      switch (profileSyncStatus.status) {
+        case "synchronizing":
+          this.loadding = true;
+          break;
+        default:
+          this.loadding = false;
+          break;
+      }
     });
 
     switch (this.profile?.type) {

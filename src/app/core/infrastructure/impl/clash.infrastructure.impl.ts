@@ -151,10 +151,8 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
           })
         );
         this.clashProcess.addListener("exit", (code, signal) => {
-          if (code === 0 || code === null) {
-            logger.info("Clash is stopped");
-          } else {
-            logger.error("Clash is stopped with code: ", code);
+          if (code !== 0 && code !== null) {
+            logger.error("Clash is exited with code: ", code);
           }
           this.clashStatusChangedBehaviorSubject.next("stopped");
         });
