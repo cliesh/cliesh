@@ -2,7 +2,7 @@ import { Component } from "@angular/core";
 import { ipcRenderer } from "electron";
 import { getLogger } from "log4js";
 import { platform } from "os";
-import { Subscription } from "rxjs";
+import { debounceTime, Subscription } from "rxjs";
 import { ConfigManager } from "./core/manager/config.manager";
 import { ClashService } from "./core/service/clash.service";
 import { Traffic, TrafficMonitorService } from "./core/service/monitor-traffic.service";
@@ -26,7 +26,11 @@ export class AppComponent {
     this.platform = platform();
     this.version = configManager.version;
 
-    this.clashService.clashStatusChanged$.subscribe({
+    this.clashService.clashStatusChanged$.pipe(
+      // selected unmatched local profile
+      // cause the animation transitions to look unnatural
+      debounceTime(300)
+    ).subscribe({
       next: (status) => {
         switch (status) {
           case "connected":
