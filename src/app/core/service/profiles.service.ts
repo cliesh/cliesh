@@ -8,6 +8,7 @@ import path from "path";
 import { BehaviorSubject, timer } from "rxjs";
 import { ConfigManager } from "../manager/config.manager";
 import { SettingManager } from "../manager/setting.manager";
+import { NotificationProvider } from "../provider/notification.provider";
 
 export type ProfileType = "file" | "remote";
 
@@ -53,7 +54,7 @@ export class ProfilesService {
   private profileSelectedChangedBehaviorSubject = new BehaviorSubject<Profile | undefined>(this.selectedProfile);
   profileSelectedChanged$ = this.profileSelectedChangedBehaviorSubject.asObservable();
 
-  constructor(private settingManager: SettingManager, private configManager: ConfigManager, private httpClient: HttpClient) {
+  constructor(private notificationProvider: NotificationProvider, private settingManager: SettingManager, private configManager: ConfigManager, private httpClient: HttpClient) {
     this.hotReloadFileProfileWhenChanged();
     timer(0, 1000 * 60).subscribe(() => {
       // repeat every 1 minute
@@ -72,6 +73,7 @@ export class ProfilesService {
         this.logger.info("File profile changed, will reload");
       } catch (err: any) {
         this.logger.error("File profile hot reload failed", err.message);
+        this.notificationProvider.notification("File profile hot reload failed", err.message);
       }
     });
   }
@@ -107,7 +109,7 @@ export class ProfilesService {
           resolve();
         } catch (err: any) {
           // err instanceof yaml.YAMLException
-          const message = err.message.split("\n")[0]
+          const message = err.message.split("\n")[0];
           reject(new Error(message));
         }
       } else {

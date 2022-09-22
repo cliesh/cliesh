@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild } from "@angular/core";
 import { ipcRenderer } from "electron";
 import { NzModalService } from "ng-zorro-antd/modal";
-import { NotificationService } from "src/app/core/service/notification.service";
+import { NotificationProvider } from "src/app/core/provider/notification.provider";
 import { ProfilesService } from "src/app/core/service/profiles.service";
 import { ProfilesAddProvider } from "./profiles-add/profiles-add.provider";
 
@@ -21,7 +21,7 @@ export class ProfilesComponent implements OnInit {
 
   constructor(
     private modal: NzModalService,
-    private notificationService: NotificationService,
+    private notificationProvider: NotificationProvider,
     private profilesService: ProfilesService,
     private profilesAddProvider: ProfilesAddProvider
   ) {}
@@ -107,10 +107,10 @@ export class ProfilesComponent implements OnInit {
           this.profilesService
             .syncProfileByName(profileName)
             .then(() => {
-              this.notificationService.notification("Sync profile success", "success");
+              this.notificationProvider.notification("Sync profile success", "success");
             })
             .catch((err) => {
-              this.notificationService.notification("Sync profile failed", err.message);
+              this.notificationProvider.notification("Sync profile failed", err.message);
             });
           break;
         case "delete":

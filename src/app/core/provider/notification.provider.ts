@@ -6,9 +6,7 @@ import { Injectable } from "@angular/core";
 @Injectable({
   providedIn: "root"
 })
-export class NotificationService {
-  constructor() {}
-
+export class NotificationProvider {
   notification(title: string, message: string) {
     new Notification(title, {
       icon: "assets/logo.png",

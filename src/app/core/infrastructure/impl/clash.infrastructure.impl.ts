@@ -7,6 +7,7 @@ import * as path from "path";
 import { BehaviorSubject, skip, timer } from "rxjs";
 import { Stream } from "stream";
 import { v4 as uuidv4 } from "uuid";
+import { NotificationProvider } from "../../provider/notification.provider";
 import { ClashInfrastructure, ClashProcessControllerEntry, ClashStatus } from "../clash.infrastructure";
 import { ConfigInfrastructure } from "../config.infrastructure";
 import { SettingInfrastructure } from "../setting.infrastructure";
@@ -78,7 +79,7 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
     else return path.join(this.configInfrastructure.clashDirectory, "clash");
   }
 
-  constructor(private configInfrastructure: ConfigInfrastructure, private settingInfrastructure: SettingInfrastructure) {
+  constructor(private notificationProvider: NotificationProvider, private configInfrastructure: ConfigInfrastructure, private settingInfrastructure: SettingInfrastructure) {
     this.clashStatusChangedBehaviorSubject
       .asObservable()
       .pipe(skip(1))
@@ -210,8 +211,22 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
           case "error":
             clashLogger.error(match[2]);
             break;
+          case "trace":
+            clashLogger.trace(match[2]);
+            break;
+          case "debug":
+            clashLogger.debug(match[2]);
+            break;
+          case "fatal":
+            clashLogger.fatal(match[2]);
+            this.clashStatusChangedBehaviorSubject.next("stopping");
+            this.notificationProvider.notification("Clash Fatal Error", match[2]);
+            break;
+          case "mark":
+            clashLogger.mark(match[2]);
+            break;
           default:
-            clashLogger.warn("[unknown log level]: ", match[2]);
+            clashLogger.warn("[unknown log level]: ", line);
             break;
         }
       }

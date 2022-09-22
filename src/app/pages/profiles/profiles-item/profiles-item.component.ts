@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from "@angular/core";
 import { firstValueFrom, timer } from "rxjs";
-import { NotificationService } from "src/app/core/service/notification.service";
+import { NotificationProvider } from "src/app/core/provider/notification.provider";
 import { FileProfile, Profile, ProfilesService, RemoteProfile } from "src/app/core/service/profiles.service";
 
 @Component({
@@ -18,7 +18,7 @@ export class ProfilesItemComponent implements OnInit {
   fileProfile?: FileProfile;
   remoteProfile?: RemoteProfile;
 
-  constructor(private profilesService: ProfilesService, private notificationService: NotificationService) { }
+  constructor(private profilesService: ProfilesService, private notificationProvider: NotificationProvider) {}
 
   ngOnInit(): void {
     this.profilesService.profileSelectedChanged$.subscribe((selectedProfile) => {
@@ -46,7 +46,7 @@ export class ProfilesItemComponent implements OnInit {
       await firstValueFrom(timer(1000));
       await this.profilesService.selectProfile(this.profile!.id);
     } catch (e: any) {
-      this.notificationService.notification("Change profile failed", e.message);
+      this.notificationProvider.notification("Change profile failed", e.message);
     } finally {
       this.loadding = false;
     }
