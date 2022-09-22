@@ -4,6 +4,7 @@ import { getLogger } from "log4js";
 import { platform } from "os";
 import { debounceTime, Subscription } from "rxjs";
 import { ConfigManager } from "./core/manager/config.manager";
+import { ClashConfigService } from "./core/service/clash-config.service";
 import { ClashService } from "./core/service/clash.service";
 import { Traffic, TrafficMonitorService } from "./core/service/monitor-traffic.service";
 
@@ -22,7 +23,7 @@ export class AppComponent {
   version: string = "unknown";
   traffic: Traffic = { up: 0, down: 0 };
 
-  constructor(configManager: ConfigManager, private clashService: ClashService, private trafficMonitorService: TrafficMonitorService) {
+  constructor(configManager: ConfigManager, private clashService: ClashService, private clashcService: ClashConfigService, private trafficMonitorService: TrafficMonitorService) {
     this.platform = platform();
     this.version = configManager.version;
 

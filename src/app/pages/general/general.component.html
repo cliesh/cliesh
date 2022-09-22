@@ -1,0 +1,45 @@
+<div>
+  <!-- ignore
+    authentication: [],
+    mode: "rule"
+  -->
+  <nz-divider nzText="Port" nzOrientation="left"></nz-divider>
+  <div class="item">
+    <div class="title">Port</div>
+    <div class="value">{{ config["port"] }}</div>
+  </div>
+  <div class="item">
+    <div class="title">Socks port</div>
+    <div class="value">{{ config["socks-port"] }}</div>
+  </div>
+  <div class="item">
+    <div class="title">Redirect port</div>
+    <div class="value">{{ config["redir-port"] }}</div>
+  </div>
+  <div class="item">
+    <div class="title">Transparent proxy port</div>
+    <div class="value">{{ config["tproxy-port"] }}</div>
+  </div>
+  <div class="item">
+    <div class="title">Mixed port</div>
+    <div class="value">{{ config["mixed-port"] }}</div>
+  </div>
+
+  <nz-divider nzText="Options" nzOrientation="left"></nz-divider>
+  <div class="item">
+    <div class="title">IPv6</div>
+    <div class="value">{{ config["ipv6"] }}</div>
+  </div>
+  <div class="item">
+    <div class="title">Allow LAN</div>
+    <div class="value">{{ config["allow-lan"] }}</div>
+  </div>
+  <div class="item">
+    <div class="title">Bind address</div>
+    <div class="value">{{ config["bind-address"] }}</div>
+  </div>
+  <div class="item">
+    <div class="title">Log level</div>
+    <div class="value">{{ config["log-level"] }}</div>
+  </div>
+</div>
