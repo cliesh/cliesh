@@ -1,5 +1,6 @@
 import { Component, OnInit } from "@angular/core";
-import { ClashConfigs, ClashConfigService } from "src/app/core/service/clash-config.service";
+import { NotificationProvider } from "src/app/core/provider/notification.provider";
+import { ClashConfigs, ClashConfigService, ClashLogLevelType, ClashModeType } from "src/app/core/service/clash-config.service";
 
 @Component({
   selector: "app-general",
@@ -7,15 +8,59 @@ import { ClashConfigs, ClashConfigService } from "src/app/core/service/clash-con
   styleUrls: ["./general.component.scss"]
 })
 export class GeneralComponent implements OnInit {
-  config!: ClashConfigs;
+  logLevel: ClashLogLevelType[] = ["info", "warning", "error", "debug", "silent"];
+  mode: ClashModeType[] = ["global", "rule", "direct"];
+  config: any = {};
 
-  constructor(private clashConfigService: ClashConfigService) {
-    this.clashConfigService.configChanged$.subscribe({
-      next: (config) => {
-        this.config = config;
-      }
-    });
+  constructor(private clashConfigService: ClashConfigService, private notificationProvider: NotificationProvider) {}
+
+  ngOnInit(): void {
+    this.reloadConfig();
   }
 
-  ngOnInit(): void {}
+  reloadConfig(): void {
+    console.log("reloadConfig");
+    const configOnDisk = this.clashConfigService.loadConfigFromDisk();
+    this.config.port = configOnDisk.port!.toString();
+    this.config.socksPort = configOnDisk["socks-port"]!.toString();
+    this.config.redirectPort = configOnDisk["redir-port"]!.toString();
+    this.config.transparentProxyPort = configOnDisk["tproxy-port"]!.toString();
+    this.config.mixedPort = configOnDisk["mixed-port"]!.toString();
+    this.config.ipv6 = configOnDisk.ipv6;
+    this.config.allowLan = configOnDisk["allow-lan"];
+    this.config.bindAddress = configOnDisk["bind-address"];
+    this.config.mode = configOnDisk.mode;
+    this.config.logLevel = ["info", "warning", "error", "debug", "silent"].indexOf(configOnDisk["log-level"]!);
+  }
+
+  async handleAnytingChange(): Promise<void> {
+    console.log("handleAnytingChange");
+    try {
+      const clashConfig: ClashConfigs = {
+        port: parseInt(this.config.port, 10),
+        "socks-port": parseInt(this.config.socksPort, 10),
+        "redir-port": parseInt(this.config.redirectPort, 10),
+        "tproxy-port": parseInt(this.config.transparentProxyPort, 10),
+        "mixed-port": parseInt(this.config.mixedPort, 10),
+        authentication: [],
+        "allow-lan": this.config.allowLan,
+        "bind-address": this.config.bindAddress,
+        mode: this.mode[this.config.mode],
+        "log-level": this.logLevel[this.config.logLevel],
+        ipv6: this.config.ipv6
+      };
+      this.clashConfigService.updateConfig(clashConfig).subscribe({
+        next: () => {
+          // ignore
+        },
+        error: async (err) => {
+          this.notificationProvider.notification("Config update failed", err.message);
+          this.reloadConfig();
+        }
+      });
+    } catch (e: any) {
+      this.notificationProvider.notification("Config update failed", e.message);
+      this.reloadConfig();
+    }
+  }
 }

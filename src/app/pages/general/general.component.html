@@ -1,45 +1,71 @@
-<div>
-  <!-- ignore
+<!-- ignore
     authentication: [],
     mode: "rule"
   -->
-  <nz-divider nzText="Port" nzOrientation="left"></nz-divider>
+<nz-divider nzText="Port" nzOrientation="left"></nz-divider>
+<div class="group">
   <div class="item">
     <div class="title">Port</div>
-    <div class="value">{{ config["port"] }}</div>
+    <div class="value">
+      <span nz-typography nzEditable nzCopyable [(nzContent)]="config.port"></span>
+    </div>
   </div>
   <div class="item">
     <div class="title">Socks port</div>
-    <div class="value">{{ config["socks-port"] }}</div>
+    <div class="value">
+      <span nz-typography nzEditable nzCopyable [(nzContent)]="config.socksPort"></span>
+    </div>
   </div>
   <div class="item">
     <div class="title">Redirect port</div>
-    <div class="value">{{ config["redir-port"] }}</div>
+    <div class="value">
+      <span nz-typography nzEditable nzCopyable [(nzContent)]="config.redirectPort"></span>
+    </div>
   </div>
   <div class="item">
     <div class="title">Transparent proxy port</div>
-    <div class="value">{{ config["tproxy-port"] }}</div>
+    <div class="value">
+      <span nz-typography nzEditable nzCopyable [(nzContent)]="config.transparentProxyPort"></span>
+    </div>
   </div>
   <div class="item">
     <div class="title">Mixed port</div>
-    <div class="value">{{ config["mixed-port"] }}</div>
+    <div class="value">
+      <span nz-typography nzEditable nzCopyable [(nzContent)]="config.mixedPort"></span>
+    </div>
   </div>
+</div>
 
-  <nz-divider nzText="Options" nzOrientation="left"></nz-divider>
+<nz-divider nzText="Options" nzOrientation="left"></nz-divider>
+<div class="group">
   <div class="item">
     <div class="title">IPv6</div>
-    <div class="value">{{ config["ipv6"] }}</div>
+    <div class="value">
+      <nz-switch [(ngModel)]="config.ipv6"></nz-switch>
+    </div>
   </div>
   <div class="item">
     <div class="title">Allow LAN</div>
-    <div class="value">{{ config["allow-lan"] }}</div>
+    <div class="value">
+      <nz-switch [(ngModel)]="config.allowLan"></nz-switch>
+    </div>
   </div>
   <div class="item">
     <div class="title">Bind address</div>
-    <div class="value">{{ config["bind-address"] }}</div>
+    <div class="value">
+      <span nz-typography nzEditable [(nzContent)]="config.bindAddress"></span>
+    </div>
+  </div>
+  <div class="item">
+    <div class="title">Mode</div>
+    <div class="value">
+      <nz-segmented nzSize="small" [(ngModel)]="config.mode" [nzOptions]="mode" (ngModelChange)="handleAnytingChange()"></nz-segmented>
+    </div>
   </div>
   <div class="item">
     <div class="title">Log level</div>
-    <div class="value">{{ config["log-level"] }}</div>
+    <div class="value">
+      <nz-segmented nzSize="small" [(ngModel)]="config.logLevel" [nzOptions]="logLevel" (ngModelChange)="handleAnytingChange()"></nz-segmented>
+    </div>
   </div>
 </div>
