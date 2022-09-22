@@ -36,10 +36,25 @@
 .profile.loadding {
   background-image: linear-gradient(90deg, #f1f1f1 20%, #4e4e4e 50%, #f1f1f1 80%);
   background-repeat: no-repeat;
-  animation: loadding 2s infinite;
+  animation: loadding-unactive 2s infinite;
 }
 
-@keyframes loadding {
+.profile.active.loadding {
+  background-image: linear-gradient(90deg, #4e4e4e 20%, #f1f1f1 50%, #4e4e4e 80%);
+  background-repeat: no-repeat;
+  animation: loadding-active 2s infinite;
+}
+
+@keyframes loadding-unactive {
+  0% {
+    background-position-x: -230px;
+  }
+  100% {
+    background-position-x: 300px;
+  }
+}
+
+@keyframes loadding-active {
   0% {
     background-position-x: -230px;
   }
