@@ -1,7 +1,9 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
+import * as chokidar from "chokidar";
 import fs from "fs";
 import * as yaml from "js-yaml";
+import { getLogger } from "log4js";
 import path from "path";
 import { BehaviorSubject, timer } from "rxjs";
 import { ConfigManager } from "../manager/config.manager";
@@ -43,6 +45,8 @@ export interface RemoteProfile extends Profile {
   providedIn: "root"
 })
 export class ProfilesService {
+  private logger = getLogger("ProfilesService");
+
   private profilesBehaviorSubject = new BehaviorSubject<Profile[]>([]);
   profiles$ = this.profilesBehaviorSubject.asObservable();
 
@@ -50,9 +54,25 @@ export class ProfilesService {
   profileSelectedChanged$ = this.profileSelectedChangedBehaviorSubject.asObservable();
 
   constructor(private settingManager: SettingManager, private configManager: ConfigManager, private httpClient: HttpClient) {
+    this.hotReloadFileProfileWhenChanged();
     timer(0, 1000 * 60).subscribe(() => {
       // repeat every 1 minute
       this.profilesBehaviorSubject.next(this.getProfiles());
+    });
+  }
+
+  private hotReloadFileProfileWhenChanged(): void {
+    const fileWatcher = chokidar.watch(path.parse(this.profilesDirectory).dir);
+    fileWatcher.on("change", async (changedPath) => {
+      try {
+        if (this.selectedProfile?.type !== "file") return;
+        const fileProfile = this.selectedProfile as FileProfile;
+        if (path.basename(fileProfile.path) !== path.basename(changedPath)) return;
+        await this.selectProfile(fileProfile.id);
+        this.logger.info("File profile changed, will reload");
+      } catch (err: any) {
+        this.logger.error("File profile hot reload failed", err.message);
+      }
     });
   }
 
@@ -68,7 +88,7 @@ export class ProfilesService {
   async selectProfile(id: string): Promise<void> {
     const profile = this.getProfiles().find((profile) => profile.id === id);
     if (profile === undefined) throw new Error("Profile not found");
-    await this.verifyProfile(profile);  
+    await this.verifyProfile(profile);
     this.settingManager.set("profile.selected", id);
     this.profileSelectedChangedBehaviorSubject.next(profile);
   }

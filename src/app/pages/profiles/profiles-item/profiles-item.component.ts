@@ -39,7 +39,7 @@ export class ProfilesItemComponent implements OnInit {
   }
 
   async selectProfile(): Promise<void> {
-    if (this.selected) return;
+    if (this.selected || this.loadding) return;
     try {
       this.loadding = true;
       // for ui animation
