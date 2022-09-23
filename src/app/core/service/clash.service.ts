@@ -43,13 +43,13 @@ export class ClashService {
   private async changeProfile(profile: Profile): Promise<void> {
     if (profile.type === "file") {
       const fileProfile = profile as FileProfile;
-      await this.clashManager.changeConfig({
+      await this.clashManager.startClash({
         clashType: "local",
         profilePath: fileProfile.path
       });
     } else if (profile.type === "remote") {
       const remoteProfile = profile as RemoteProfile;
-      await this.clashManager.changeConfig({
+      await this.clashManager.startClash({
         clashType: "remote",
         schema: remoteProfile.schema,
         host: remoteProfile.host,

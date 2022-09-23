@@ -5,16 +5,16 @@ import { ClashInfrastructure } from "../infrastructure/clash.infrastructure";
 export type ClashType = "local" | "remote";
 export type RemoteClashStatus = "connected" | "disconnected";
 
-export interface ClashConfig {
+export interface ClashStartRequest {
   clashType: ClashType;
 }
 
-export interface LocalClashConfig extends ClashConfig {
+export interface LocalClashStartRequest extends ClashStartRequest {
   clashType: "local";
   profilePath: string;
 }
 
-export interface RemoteClashConfig extends ClashConfig {
+export interface RemoteClashStartRequest extends ClashStartRequest {
   clashType: "remote";
   schema: string;
   host: string;
@@ -70,27 +70,27 @@ export class ClashManager {
     });
   }
 
-  async changeConfig(config: LocalClashConfig | RemoteClashConfig): Promise<void> {
-    if (config.clashType === "local") {
-      await this.changeToLocalClashConfig(config as LocalClashConfig);
+  async startClash(startRequest: LocalClashStartRequest | RemoteClashStartRequest): Promise<void> {
+    if (startRequest.clashType === "local") {
+      await this.restartLocalClashConfig(startRequest as LocalClashStartRequest);
     } else {
-      await this.changeToRemoteClashConfig(config as RemoteClashConfig);
+      await this.connectRemoteClashConfig(startRequest as RemoteClashStartRequest);
     }
     this.resetSystemProxy();
     this.clashConfigChangedBehaviorSubject.next(true);
   }
 
-  private async changeToLocalClashConfig(config: LocalClashConfig): Promise<void> {
+  private async restartLocalClashConfig(startRequest: LocalClashStartRequest): Promise<void> {
     await this.stopLocalClashOrDisconnectRemoteClash();
-    await this.clashInfrastructure.restartClash(config.profilePath);
+    await this.clashInfrastructure.restartClash(startRequest.profilePath);
   }
 
-  private async changeToRemoteClashConfig(config: RemoteClashConfig): Promise<void> {
+  private async connectRemoteClashConfig(startRequest: RemoteClashStartRequest): Promise<void> {
     await this.stopLocalClashOrDisconnectRemoteClash();
-    this.schema = config.schema;
-    this.host = config.host;
-    this.port = config.port;
-    this.authorizationToken = config.authorization;
+    this.schema = startRequest.schema;
+    this.host = startRequest.host;
+    this.port = startRequest.port;
+    this.authorizationToken = startRequest.authorization;
     this.isRemoteClashConnected = true;
     this.remoteClashStatusChangedBehaviorSubject.next("connected");
     return Promise.resolve();
