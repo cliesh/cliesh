@@ -191,7 +191,7 @@ export class ProfilesService {
         this.settingManager.set("profile.all", profiles);
         this.profilesBehaviorSubject.next(profiles);
         if(this.selectedProfile === undefined) {
-          this.logger.info("Profile has been deleted, will shutdown clash process or disconnect remote clash");
+          this.logger.info("The selected profile has been deleted, will shutdown clash process or disconnect remote clash");
           this.profileSelectedChangedBehaviorSubject.next(undefined);
         }
         resolve();
