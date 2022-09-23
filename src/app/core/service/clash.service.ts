@@ -16,10 +16,13 @@ export class ClashService {
 
   constructor(private profilesService: ProfilesService, private clashManager: ClashManager) {
     this.profilesService.profileSelectedChanged$.subscribe((profile) => {
-      if (!profile) return;
-      const type = profile.type === "file" ? "file profile" : "remote profile";
-      this.logger.info(`profile selected changed to ${type}: `, profile?.id);
-      this.changeProfile(profile);
+      if (profile === undefined) {
+        this.clashManager.stopLocalClashOrDisconnectRemoteClash();
+      } else {
+        const type = profile.type === "file" ? "file profile" : "remote profile";
+        this.logger.info(`profile selected changed to ${type}: `, profile?.id);
+        this.changeProfile(profile);
+      }
     });
   }
 
@@ -43,13 +46,13 @@ export class ClashService {
   private async changeProfile(profile: Profile): Promise<void> {
     if (profile.type === "file") {
       const fileProfile = profile as FileProfile;
-      await this.clashManager.startClash({
+      await this.clashManager.startOrConnectClash({
         clashType: "local",
         profilePath: fileProfile.path
       });
     } else if (profile.type === "remote") {
       const remoteProfile = profile as RemoteProfile;
-      await this.clashManager.startClash({
+      await this.clashManager.startOrConnectClash({
         clashType: "remote",
         schema: remoteProfile.schema,
         host: remoteProfile.host,

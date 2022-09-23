@@ -70,22 +70,22 @@ export class ClashManager {
     });
   }
 
-  async startClash(startRequest: LocalClashStartRequest | RemoteClashStartRequest): Promise<void> {
+  async startOrConnectClash(startRequest: LocalClashStartRequest | RemoteClashStartRequest): Promise<void> {
     if (startRequest.clashType === "local") {
-      await this.restartLocalClashConfig(startRequest as LocalClashStartRequest);
+      await this.restartLocalClash(startRequest as LocalClashStartRequest);
     } else {
-      await this.connectRemoteClashConfig(startRequest as RemoteClashStartRequest);
+      await this.connectRemoteClash(startRequest as RemoteClashStartRequest);
     }
     this.resetSystemProxy();
     this.clashConfigChangedBehaviorSubject.next(true);
   }
 
-  private async restartLocalClashConfig(startRequest: LocalClashStartRequest): Promise<void> {
+  private async restartLocalClash(startRequest: LocalClashStartRequest): Promise<void> {
     await this.stopLocalClashOrDisconnectRemoteClash();
     await this.clashInfrastructure.restartClash(startRequest.profilePath);
   }
 
-  private async connectRemoteClashConfig(startRequest: RemoteClashStartRequest): Promise<void> {
+  private async connectRemoteClash(startRequest: RemoteClashStartRequest): Promise<void> {
     await this.stopLocalClashOrDisconnectRemoteClash();
     this.schema = startRequest.schema;
     this.host = startRequest.host;
@@ -96,7 +96,7 @@ export class ClashManager {
     return Promise.resolve();
   }
 
-  private async stopLocalClashOrDisconnectRemoteClash(): Promise<void> {
+  async stopLocalClashOrDisconnectRemoteClash(): Promise<void> {
     if (this.isRemoteClashConnected) {
       this.isRemoteClashConnected = false;
       this.remoteClashStatusChangedBehaviorSubject.next("disconnected");
