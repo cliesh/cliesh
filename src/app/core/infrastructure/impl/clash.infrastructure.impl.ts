@@ -208,6 +208,7 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
             break;
           case "error":
             clashLogger.error(match[2]);
+            this.notificationProvider.notification("Clash Error", match[2]);
             break;
           case "trace":
             clashLogger.trace(match[2]);

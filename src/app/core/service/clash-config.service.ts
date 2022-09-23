@@ -70,15 +70,37 @@ export class ClashConfigService {
     );
   }
 
-  private verifyConfig(config: ClashConfigs) {  
+  private verifyConfig(config: ClashConfigs) {
     if (config.port !== undefined && !this.verifyPort(config.port)) throw new Error("Invalid port");
     if (config["socks-port"] !== undefined && !this.verifyPort(config["socks-port"])) throw new Error("Invalid socks-port");
     if (config["redir-port"] !== undefined && !this.verifyPort(config["redir-port"])) throw new Error("Invalid redir-port");
     if (config["tproxy-port"] !== undefined && !this.verifyPort(config["tproxy-port"])) throw new Error("Invalid tproxy-port");
     if (config["mixed-port"] !== undefined && !this.verifyPort(config["mixed-port"])) throw new Error("Invalid mixed-port");
-    if (config["bind-address"] !== undefined && config["bind-address"] !== '*' && this.hostRegex.test(config["bind-address"]) === false) throw new Error("Invalid bind address");
+    if (config["bind-address"] !== undefined && !this.verifyHost(config["bind-address"])) throw new Error("Invalid bind address");
     if (config["log-level"] !== undefined && ["info", "warning", "error", "debug", "silent"].includes(config["log-level"]) === false) throw new Error("Invalid log level");
     if (config.mode !== undefined && ["global", "rule", "direct"].includes(config.mode) === false) throw new Error("Invalid mode");
+  }
+
+  readonly ipRegex = new RegExp("^\\d+\\.\\d+\\.\\d+\\.\\d+$");
+  readonly ipWithMask = new RegExp("^\\d+\\.\\d+\\.\\d+\\.\\d+/\\d+$");
+  readonly ipRange = new RegExp("^\\d+\\.\\d+\\.\\d+\\.\\d+-\\d+$");
+
+  /**
+   * Check if the given string is a valid IP address or IP range
+   *
+   * example:
+   * 192.168.0.0
+   * 192.168.0.0-255
+   * 192.168.0.0/24
+   *
+   * @param host
+   * @returns
+   */
+  private verifyHost(host: string): boolean {
+    return true
+    if (host === "*") return true;
+    // return this.ipRegex.test(host) || this.ipWithMask.test(host) || this.ipRange.test(host);
+    return this.ipRegex.test(host);
   }
 
   private verifyPort(port: number): boolean {

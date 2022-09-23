@@ -19,7 +19,6 @@ export class GeneralComponent implements OnInit {
   }
 
   reloadConfig(): void {
-    console.log("reloadConfig");
     const configOnDisk = this.clashConfigService.loadConfigFromDisk();
     this.config.port = configOnDisk.port!.toString();
     this.config.socksPort = configOnDisk["socks-port"]!.toString();
@@ -29,12 +28,11 @@ export class GeneralComponent implements OnInit {
     this.config.ipv6 = configOnDisk.ipv6;
     this.config.allowLan = configOnDisk["allow-lan"];
     this.config.bindAddress = configOnDisk["bind-address"];
-    this.config.mode = configOnDisk.mode;
+    this.config.mode = ["global", "rule", "direct"].indexOf(configOnDisk.mode!);
     this.config.logLevel = ["info", "warning", "error", "debug", "silent"].indexOf(configOnDisk["log-level"]!);
   }
 
   async handleAnytingChange(): Promise<void> {
-    console.log("handleAnytingChange");
     try {
       const clashConfig: ClashConfigs = {
         port: parseInt(this.config.port, 10),

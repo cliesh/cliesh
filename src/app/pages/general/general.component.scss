@@ -1,4 +1,10 @@
+nz-divider {
+  user-select: none;
+}
+
 .group {
+  user-select: none;
+
   .item {
     display: flex;
     justify-content: space-between;
