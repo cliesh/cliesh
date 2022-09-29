@@ -38,4 +38,7 @@ testem.log
 Thumbs.db
 
 package/clash/
+
+.wireit
 .package
+cliesh.asar
