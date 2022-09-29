@@ -1,0 +1,114 @@
+name: Pack
+
+on: [push, pull_request]
+
+jobs:
+
+  pack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3.5.0
+        with:
+          node-version: 18
+          cache: npm
+      - run: node --version; npm --version
+      - run: npm ci
+      - run: npm run build
+      - name: Update clash's Country.mmdb
+        run: rm package/clash/Country.mmdb && wget -O package/clash/Country.mmdb https://github.com/Dreamacro/maxmind-geoip/releases/latest/download/Country.mmdb
+      
+      - name: Before Pack
+        run: |
+          mkdir .package
+          cp -r package .package/
+          cp -r dist/cliesh/* .package/
+          cp package.json .package/ && cp main.js .package/
+
+      - name: Pack Windows i386
+        run: |
+          mkdir .package-windows-i386
+          cp -r .package/* .package-windows-i386/
+          wget -O .package-windows-i386/package/clash/clash.zip https://release.dreamacro.workers.dev/2022.08.26/clash-windows-386-2022.08.26.zip
+          unzip .package-windows-i386/package/clash/clash.zip -d .package-windows-i386/package/clash/ && rm .package-windows-i386/package/clash/clash.zip
+          npx asar pack .package-windows-i386 cliesh-windows-i386.asar
+
+      - name: Pack Windows amd64
+        run: |
+          mkdir .package-windows-amd64
+          cp -r .package/* .package-windows-amd64/
+          wget -O .package-windows-amd64/package/clash/clash.zip https://release.dreamacro.workers.dev/2022.08.26/clash-windows-amd64-2022.08.26.zip
+          unzip .package-windows-amd64/package/clash/clash.zip -d .package-windows-amd64/package/clash/ && rm .package-windows-amd64/package/clash/clash.zip
+          npx asar pack .package-windows-amd64 cliesh-windows-amd64.asar
+
+      - name: Pack Windows arm32
+        run: |
+          mkdir .package-windows-arm32
+          cp -r .package/* .package-windows-arm32/
+          wget -O .package-windows-arm32/package/clash/clash.zip https://release.dreamacro.workers.dev/2022.08.26/clash-windows-arm32v7-2022.08.26.zip
+          unzip .package-windows-arm32/package/clash/clash.zip -d .package-windows-arm32/package/clash/ && rm .package-windows-arm32/package/clash/clash.zip
+          npx asar pack .package-windows-arm32 cliesh-windows-arm32.asar
+
+      - name: Pack Windows arm64
+        run: |
+          mkdir .package-windows-arm64
+          cp -r .package/* .package-windows-arm64/
+          wget -O .package-windows-arm64/package/clash/clash.zip https://release.dreamacro.workers.dev/2022.08.26/clash-windows-arm64-2022.08.26.zip
+          unzip .package-windows-arm64/package/clash/clash.zip -d .package-windows-arm64/package/clash/ && rm .package-windows-arm64/package/clash/clash.zip
+          npx asar pack .package-windows-arm64 cliesh-windows-arm64.asar
+
+      - name: Pack Mac amd64
+        run: |
+          mkdir .package-darwin-amd64
+          cp -r .package/* .package-darwin-amd64/
+          wget -O .package-darwin-amd64/package/clash/clash.gz https://release.dreamacro.workers.dev/2022.08.26/clash-darwin-amd64-2022.08.26.gz
+          gzip -d .package-darwin-amd64/package/clash/clash.gz
+          npx asar pack .package-darwin-amd64 cliesh-darwin-amd64.asar
+
+      - name: Pack Mac arm64
+        run: |
+          mkdir .package-darwin-arm64
+          cp -r .package/* .package-darwin-arm64/
+          wget -O .package-darwin-arm64/package/clash/clash.gz https://release.dreamacro.workers.dev/2022.08.26/clash-darwin-arm64-2022.08.26.gz
+          gzip -d .package-darwin-arm64/package/clash/clash.gz
+          npx asar pack .package-darwin-arm64 cliesh-darwin-arm64.asar
+
+      - name: Pack Linux i386
+        run: |
+          mkdir .package-linux-i386
+          cp -r .package/* .package-linux-i386/
+          wget -O .package-linux-i386/package/clash/clash.gz https://release.dreamacro.workers.dev/2022.08.26/clash-linux-386-2022.08.26.gz
+          gzip -d .package-linux-i386/package/clash/clash.gz
+          npx asar pack .package-linux-i386 cliesh-linux-i386.asar
+
+      - name: Pack Linux amd64
+        run: |
+          mkdir .package-linux-amd64
+          cp -r .package/* .package-linux-amd64/
+          wget -O .package-linux-amd64/package/clash/clash.gz https://release.dreamacro.workers.dev/2022.08.26/clash-linux-amd64-2022.08.26.gz
+          gzip -d .package-linux-amd64/package/clash/clash.gz
+          npx asar pack .package-linux-amd64 cliesh-linux-amd64.asar
+
+      - name: Pack Linux armv8
+        run: |
+          mkdir .package-linux-armv8
+          cp -r .package/* .package-linux-armv8/
+          wget -O .package-linux-armv8/package/clash/clash.gz https://release.dreamacro.workers.dev/2022.08.26/clash-linux-armv8-2022.08.26.gz
+          gzip -d .package-linux-armv8/package/clash/clash.gz
+          npx asar pack .package-linux-armv8 cliesh-linux-armv8.asar
+      
+      - name: Publish artifacts
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: cliesh.asar
+          path: |
+            cliesh-windows-i386.asar
+            cliesh-windows-amd64.asar
+            cliesh-windows-arm32.asar
+            cliesh-windows-arm64.asar
+            cliesh-darwin-amd64.asar
+            cliesh-darwin-arm64.asar
+            cliesh-linux-i386.asar
+            cliesh-linux-amd64.asar
+            cliesh-linux-armv8.asar
