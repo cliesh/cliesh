@@ -15,9 +15,9 @@ jobs:
           cache: npm
       - run: node --version; npm --version
       - run: npm ci
-      - run: npm run pack
       - name: Download clash's Country.mmdb
         run: wget -O .package/package/clash/Country.mmdb https://github.com/Dreamacro/maxmind-geoip/releases/latest/download/Country.mmdb
+      - run: npm run pack
       - name: Publish artifacts
         uses: actions/upload-artifact@v2
         with:
