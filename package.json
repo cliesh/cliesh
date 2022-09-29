@@ -20,7 +20,7 @@
       "command": "ng build --aot --base-href ./"
     },
     "before-pack": {
-      "command": "mkdir .package && mv dist/cliesh/* .package/ && cp package.json .package/ && cp main.js .package/",
+      "command": "mkdir .package && mv package .package/ && mv dist/cliesh/* .package/ && cp package.json .package/ && cp main.js .package/",
       "dependencies": [
         "build:ng"
       ]
