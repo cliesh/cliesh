@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
 import { Observable, Observer, timer } from "rxjs";
-import { NotificationService } from "src/app/core/service/notification.service";
+import { NotificationProvider } from "src/app/core/provider/notification.provider";
 import { FileProfile, Profile, ProfilesService, RemoteProfile } from "src/app/core/service/profiles.service";
 import { ProfilesAddProvider } from "./profiles-add.provider";
 
@@ -35,7 +35,7 @@ export class ProfilesAddComponent implements OnInit {
 
   constructor(
     private fb: UntypedFormBuilder,
-    private notificationService: NotificationService,
+    private notificationProvider: NotificationProvider,
     private profilesService: ProfilesService,
     private profilesAddProvider: ProfilesAddProvider
   ) {
@@ -80,7 +80,6 @@ export class ProfilesAddComponent implements OnInit {
       this.pushLocalFileToAddQueue(files);
       this.fetchFromLocalFileQueueThenShowModal();
     });
-
 
     this.fileSelectorElement.nativeElement.addEventListener("change", () => {
       this.pushLocalFileToAddQueue(this.fileSelectorElement.nativeElement.files);
@@ -148,7 +147,7 @@ export class ProfilesAddComponent implements OnInit {
     // chekc file exists
     const profilePath = this.isEditing ? (this.editingProfile! as FileProfile).path : this.localFileProfileForm.value.path;
     if (!fs.existsSync(profilePath)) {
-      this.notificationService.notification("File not exists", "Can not find file: " + this.localFileProfileForm.value.path);
+      this.notificationProvider.notification("File not exists", "Can not find file: " + this.localFileProfileForm.value.path);
       this.isLocalFileModalOKLoadding = false;
       return;
     }
@@ -158,7 +157,7 @@ export class ProfilesAddComponent implements OnInit {
       else this.updateLocalFileProfile();
     } catch (err: any) {
       const title = this.isEditing ? "Update local profile failed" : "Add local profile failed";
-      this.notificationService.notification("Add profile failed", err.message);
+      this.notificationProvider.notification("Add profile failed", err.message);
     } finally {
       this.isLocalFileModalOKLoadding = false;
     }
@@ -168,7 +167,7 @@ export class ProfilesAddComponent implements OnInit {
     const targetPath = path.join(this.profilesService.profilesDirectory, new Date().getTime() + ".yaml");
     fs.copyFile(this.localFileProfileForm.value.path, targetPath, (err) => {
       if (err) {
-        this.notificationService.notification("Failed", "Failed to copy profile file");
+        this.notificationProvider.notification("Failed", "Failed to copy profile file");
         this.isLocalFileModalOKLoadding = false;
         return;
       }
@@ -206,7 +205,7 @@ export class ProfilesAddComponent implements OnInit {
       else await this.updateRemoteFileProfile();
     } catch (e: any) {
       const title = this.isEditing ? "Update remote profile failed" : "Add remote profile failed";
-      this.notificationService.notification(title, e.message);
+      this.notificationProvider.notification(title, e.message);
     } finally {
       this.isRemoteFileModalOKLoadding = false;
     }
@@ -246,7 +245,7 @@ export class ProfilesAddComponent implements OnInit {
       else await this.updateRemoteConnectionProfile();
     } catch (e: any) {
       const title = this.isEditing ? "Edit remote connection failed" : "Update remote connection failed";
-      this.notificationService.notification(title, e.message);
+      this.notificationProvider.notification(title, e.message);
     } finally {
       this.isRemoteConnectionModalOKLoadding = false;
     }

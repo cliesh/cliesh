@@ -1,4 +1,5 @@
-import { configure } from "log4js";
+import { ipcRenderer } from "electron";
+import { configure, getLogger } from "log4js";
 import * as path from "path";
 import { ConfigInfrastructure } from "../config.infrastructure";
 import { LoggerInfrastructure } from "../logger.infrastructure";
@@ -6,6 +7,14 @@ import { LoggerInfrastructure } from "../logger.infrastructure";
 export class LoggerInfrastructureImpl implements LoggerInfrastructure {
   constructor(configInfrastructure: ConfigInfrastructure) {
     this.configureLogger(configInfrastructure.loggerDirectory, configInfrastructure.logLevel);
+    this.monitorIpcLog();
+  }
+
+  monitorIpcLog() {
+    const logger = getLogger("LoggerInfrastructure");
+    ipcRenderer.on("logger", (event, message) => {
+      logger.info(message);
+    });
   }
 
   private configureLogger(directory: string, level: string): void {

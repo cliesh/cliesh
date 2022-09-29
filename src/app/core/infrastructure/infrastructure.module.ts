@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { NgModule } from "@angular/core";
+import { NotificationProvider } from "../provider/notification.provider";
 import { ClashInfrastructure } from "./clash.infrastructure";
 import { ConfigInfrastructure } from "./config.infrastructure";
 import { ClashInfrastructureImpl } from "./impl/clash.infrastructure.impl";
@@ -29,8 +30,8 @@ import { SettingInfrastructure } from "./setting.infrastructure";
     },
     {
       provide: ClashInfrastructure,
-      useFactory: (configInfrastructure: ConfigInfrastructure, settingInfrastructure: SettingInfrastructure) => new ClashInfrastructureImpl(configInfrastructure, settingInfrastructure),
-      deps: [ConfigInfrastructure, SettingInfrastructure]
+      useFactory: (notificationProvider: NotificationProvider, configInfrastructure: ConfigInfrastructure, settingInfrastructure: SettingInfrastructure) => new ClashInfrastructureImpl(notificationProvider, configInfrastructure, settingInfrastructure),
+      deps: [NotificationProvider,ConfigInfrastructure, SettingInfrastructure]
     }
   ]
 })

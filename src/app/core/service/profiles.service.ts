@@ -5,9 +5,10 @@ import fs from "fs";
 import * as yaml from "js-yaml";
 import { getLogger } from "log4js";
 import path from "path";
-import { BehaviorSubject, timer } from "rxjs";
+import { BehaviorSubject, interval, timeout } from "rxjs";
 import { ConfigManager } from "../manager/config.manager";
 import { SettingManager } from "../manager/setting.manager";
+import { NotificationProvider } from "../provider/notification.provider";
 
 export type ProfileType = "file" | "remote";
 
@@ -41,21 +42,34 @@ export interface RemoteProfile extends Profile {
   version: string;
 }
 
+export type syncProfileStatusType = "synchronizing" | "success" | "failed";
+
+export interface SyncProfileStatus {
+  profileId: string;
+  status: syncProfileStatusType;
+}
+
 @Injectable({
   providedIn: "root"
 })
 export class ProfilesService {
   private logger = getLogger("ProfilesService");
 
-  private profilesBehaviorSubject = new BehaviorSubject<Profile[]>([]);
+  private profilesBehaviorSubject = new BehaviorSubject<Profile[]>(this.getProfiles());
   profiles$ = this.profilesBehaviorSubject.asObservable();
 
   private profileSelectedChangedBehaviorSubject = new BehaviorSubject<Profile | undefined>(this.selectedProfile);
   profileSelectedChanged$ = this.profileSelectedChangedBehaviorSubject.asObservable();
 
-  constructor(private settingManager: SettingManager, private configManager: ConfigManager, private httpClient: HttpClient) {
+  private profileSyncStatusBehaviorSubject = new BehaviorSubject<SyncProfileStatus | undefined>(undefined);
+  profileSyncStatus$ = this.profileSyncStatusBehaviorSubject.asObservable();
+
+  private syncProfileFromRemoteTimeout: number;
+
+  constructor(private notificationProvider: NotificationProvider, private settingManager: SettingManager, private configManager: ConfigManager, private httpClient: HttpClient) {
+    this.syncProfileFromRemoteTimeout = this.configManager.get<number>("http-timeout.sync-profile-from-remote", 10000)!;
     this.hotReloadFileProfileWhenChanged();
-    timer(0, 1000 * 60).subscribe(() => {
+    interval(60000).subscribe(() => {
       // repeat every 1 minute
       this.profilesBehaviorSubject.next(this.getProfiles());
     });
@@ -68,10 +82,11 @@ export class ProfilesService {
         if (this.selectedProfile?.type !== "file") return;
         const fileProfile = this.selectedProfile as FileProfile;
         if (path.basename(fileProfile.path) !== path.basename(changedPath)) return;
-        await this.selectProfile(fileProfile.id);
         this.logger.info("File profile changed, will reload");
+        await this.selectProfile(fileProfile.id);
       } catch (err: any) {
         this.logger.error("File profile hot reload failed", err.message);
+        this.notificationProvider.notification("File profile hot reload failed", err.message);
       }
     });
   }
@@ -107,7 +122,7 @@ export class ProfilesService {
           resolve();
         } catch (err: any) {
           // err instanceof yaml.YAMLException
-          const message = err.message.split("\n")[0]
+          const message = err.message.split("\n")[0];
           reject(new Error(message));
         }
       } else {
@@ -175,6 +190,10 @@ export class ProfilesService {
         profiles.splice(index, 1);
         this.settingManager.set("profile.all", profiles);
         this.profilesBehaviorSubject.next(profiles);
+        if(this.selectedProfile === undefined) {
+          this.logger.info("The selected profile has been deleted, will shutdown clash process or disconnect remote clash");
+          this.profileSelectedChangedBehaviorSubject.next(undefined);
+        }
         resolve();
       } catch (err) {
         reject(err);
@@ -184,7 +203,9 @@ export class ProfilesService {
 
   saveProfileFromRemote(url: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      this.httpClient.get(url, { responseType: "blob" }).subscribe({
+      this.httpClient.get(url, { responseType: "blob" }).pipe(
+        timeout(this.syncProfileFromRemoteTimeout)
+      ).subscribe({
         next: (blob) => {
           const reader = new FileReader();
           reader.onload = (event) => {
@@ -248,14 +269,17 @@ export class ProfilesService {
       const profile = profiles[index] as FileProfile;
       if (profile.type !== "file") return;
       try {
+        this.profileSyncStatusBehaviorSubject.next({ profileId: profile.id, status: "synchronizing" });
         const absolutePath = await this.saveProfileFromRemote(profile.subscribeUrl!);
         fs.existsSync(profile.path) && fs.unlinkSync(profile.path);
         profile.path = absolutePath;
         profile.updateTimestamp = new Date().getTime();
         this.settingManager.set("profile.all", profiles);
         this.profilesBehaviorSubject.next(profiles);
+        this.profileSyncStatusBehaviorSubject.next({ profileId: profile.id, status: "success" });
         resolve();
       } catch (err) {
+        this.profileSyncStatusBehaviorSubject.next({ profileId: profile.id, status: "failed" });
         reject(err);
       }
     });

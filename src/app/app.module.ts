@@ -17,6 +17,7 @@ import { LoggerInfrastructure } from "./core/infrastructure/logger.infrastructur
 import { ManagerModule } from "./core/manager/manager.module";
 import { IconsProviderModule } from "./icons-provider.module";
 import { ConnectionModule } from "./pages/connection/connection.module";
+import { GeneralModule } from "./pages/general/general.module";
 import { LogsModule } from "./pages/logs/logs.module";
 import { ProfilesModule } from "./pages/profiles/profiles.module";
 import { ProxyModule } from "./pages/proxy/proxy.module";
@@ -36,6 +37,7 @@ registerLocaleData(zh);
     IconsProviderModule,
     NzLayoutModule,
     NzMenuModule,
+    GeneralModule,
     ProfilesModule,
     RuleModule,
     ConnectionModule,
@@ -63,6 +65,6 @@ export class AppModule {}
 
 export function initializeApp(loggerInfrastructure: LoggerInfrastructure) {
   return async (): Promise<void> => {
-    getLogger("APP_INITIALIZER").info("OS information: ", os.platform(), os.arch());
+    getLogger("APP_INITIALIZER").mark("OS information: ", os.platform(), os.arch());
   };
 }
