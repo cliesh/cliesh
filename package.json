@@ -5,9 +5,7 @@
   "scripts": {
     "start:ng": "wireit",
     "start:electron": "wireit",
-    "build:ng": "wireit",
-    "before-pack": "wireit",
-    "pack": "wireit"
+    "build": "wireit"
   },
   "wireit": {
     "start:ng": {
@@ -16,20 +14,8 @@
     "start:electron": {
       "command": "electron . --port 8000"
     },
-    "build:ng": {
+    "build": {
       "command": "ng build --aot --base-href ./"
-    },
-    "before-pack": {
-      "command": "mkdir .package && mv package .package/ && mv dist/cliesh/* .package/ && cp package.json .package/ && cp main.js .package/",
-      "dependencies": [
-        "build:ng"
-      ]
-    },
-    "pack": {
-      "command": "asar pack .package cliesh.asar",
-      "dependencies": [
-        "before-pack"
-      ]
     }
   },
   "private": true,
