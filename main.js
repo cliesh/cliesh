@@ -1,6 +1,8 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const contextMenu = require("electron-context-menu");
 
+process.env["NODE_CONFIG_DIR"] = "./resources/config";
+
 let appWindow;
 let isAlwaysOnTop = false;
 
@@ -80,13 +82,13 @@ function createWindow() {
     process.env["ELECTRON_DISABLE_SECURITY_WARNINGS"] = "true";
     appWindow.loadURL(`http://localhost:${port}`);
   } else {
-    appWindow.loadFile("./dist/index.html");
+    appWindow.loadFile("./index.html");
   }
 }
 
 app.whenReady().then(() => {
   createWindow();
-  
+
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       mainWindow = createWindow();
