@@ -17,7 +17,7 @@ const clashLogger = getLogger("Clash");
 
 export class ClashInfrastructureImpl implements ClashInfrastructure {
   private platform = os.platform();
-  private arch = os.arch();
+  private clashFileName = this.platform === "win32" ? "clash.exe" : "clash";
 
   private clashStatusChangedBehaviorSubject = new BehaviorSubject<ClashStatus>("stopped");
   clashStatusChanged$ = this.clashStatusChangedBehaviorSubject.asObservable();
@@ -25,59 +25,16 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
   private clashProcess: ExecaChildProcess<string> | undefined;
 
   /**
-   * path of the package clash
+   * path of the resource clash
    */
-  private get packageClashPath(): string {
-    var regex: RegExp;
-    switch (this.platform) {
-      case "linux":
-        switch (this.arch) {
-          case "x64":
-            regex = /.*linux.*amd64.*/;
-            break;
-          default:
-            throw "Don't support this architecture: " + this.arch;
-        }
-        break;
-      case "darwin":
-        switch (this.arch) {
-          case "x64":
-            regex = /.*darwin.*amd64.*/;
-            break;
-          default:
-            throw "Don't support this architecture: " + this.arch;
-        }
-        break;
-      case "win32":
-        switch (this.arch) {
-          case "x64":
-            regex = /.*windows.*amd64.*/;
-            break;
-          default:
-            throw "Don't support this architecture: " + this.arch;
-        }
-        break;
-      default:
-        throw "Don't support this platform: " + this.platform;
-    }
-
-    const fileName = fs.readdirSync("package/clash").find((file) => {
-      return regex.test(file);
-    });
-    if (fileName! === undefined) {
-      logger.error(`Can't find the package of clash: [os:${this.platform}, arch:${this.arch}]`);
-      throw new Error(`Can't find the package of clash: [os:${this.platform}, arch:${this.arch}]`);
-    }
-    return path.join("package", "clash", fileName!);
-  }
+  private resourcesClashPath = path.join("resources", "clash", this.clashFileName);
+  private resourcesClashCountryMMDBPath = path.join("resources", "clash", "Country.mmdb");
 
   /**
    * path of the runtime clash
    */
-  private get clashPath(): string {
-    if (this.platform === "win32") return path.join(this.configInfrastructure.clashDirectory, "clash.exe");
-    else return path.join(this.configInfrastructure.clashDirectory, "clash");
-  }
+  private clashPath = path.join(this.configInfrastructure.clashDirectory, this.clashFileName);
+  private clashCountryMMDBPath = path.join(this.configInfrastructure.clashDirectory, "Country.mmdb");
 
   constructor(private notificationProvider: NotificationProvider, private configInfrastructure: ConfigInfrastructure, private settingInfrastructure: SettingInfrastructure) {
     this.clashStatusChangedBehaviorSubject
@@ -117,7 +74,7 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
       }
       try {
         // install clash if not installed or version not latest
-        await this.makeSureInstalledClashVersionIsLatest();
+        this.makeSureInstalledClashVersionIsLatest();
         // start clash process
         this.clashStatusChangedBehaviorSubject.next("starting");
         const secret = uuidv4().replace(/-/g, "").substring(0, 4);
@@ -232,11 +189,11 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
     });
   }
 
-  private async makeSureInstalledClashVersionIsLatest(): Promise<void> {
+  private makeSureInstalledClashVersionIsLatest(): void {
     const programInstalled = this.isClashInstalled;
     const programVersionMatched = this.settingInfrastructure.getClashInstalledVersion() === this.configInfrastructure.clashVersionInPackage;
     if (!programInstalled || !programVersionMatched) {
-      await this.installClash();
+      this.installClash();
       this.settingInfrastructure.setClashInstalledVersion(this.configInfrastructure.clashVersionInPackage);
     }
   }
@@ -245,19 +202,13 @@ export class ClashInfrastructureImpl implements ClashInfrastructure {
     return fs.existsSync(this.clashPath);
   }
 
-  private installClash(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.clashStatusChangedBehaviorSubject.next("installing");
-      fs.copyFile(this.packageClashPath, this.clashPath, (err) => {
-        if (err) {
-          logger.error("Copy clash to runtime directory failed: ", err);
-          reject(err);
-        } else {
-          if (this.platform === "win32") return;
-          fs.chmodSync(this.clashPath, "755");
-          resolve();
-        }
-      });
+  private installClash(): void {
+    this.clashStatusChangedBehaviorSubject.next("installing");
+    fs.readdirSync(this.configInfrastructure.clashDirectory).forEach((file) => {
+      fs.unlinkSync(path.join(this.configInfrastructure.clashDirectory, file));
     });
+    fs.copyFileSync(this.resourcesClashPath, this.clashPath);
+    fs.copyFileSync(this.resourcesClashCountryMMDBPath, this.clashCountryMMDBPath);
+    fs.chmodSync(this.clashPath, "755");
   }
 }
